@@ -1,0 +1,224 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="description" content="A private request desk for exceptional watches, backed by a global dealer network." />
+  <meta name="theme-color" content="#080a09" />
+  <title>OMNI TIMEPIECES — Private Request</title>
+  <link rel="icon" href="favicon.svg" type="image/svg+xml" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&amp;family=Newsreader:opsz,wght@6..72,400;6..72,500&amp;display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <a class="skip-link" href="#request-form">Skip to private request</a>
+  <div class="movement" aria-hidden="true">
+    <img src="assets/images/complication-watch.jpg" alt="" />
+    <div class="movement-shade"></div>
+    <div class="gear gear-one"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+    <div class="gear gear-two"><i></i><i></i><i></i><i></i><i></i><i></i></div>
+    <div class="seconds-wheel"><span></span></div>
+    <div class="mechanical-heart">
+      <div class="balance-wheel"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><span></span></div>
+      <div class="escapement"><i></i><b></b></div>
+      <p><span></span>Mechanical heartbeat</p>
+    </div>
+  </div>
+
+  <main class="app-shell">
+    <header class="topbar">
+      <a class="wordmark" href="index.html" aria-label="Omni Timepieces private request"><strong>OMNI TIMEPIECES</strong><span>Private Request</span></a>
+      <div class="topbar-tools"><div class="availability"><span></span> Private desk · Worldwide</div><button type="button" data-sound-toggle aria-label="Toggle mechanical movement and interface sounds" aria-pressed="false"><i></i><span>Sound</span></button></div>
+    </header>
+
+    <section class="concierge" aria-label="Private watch request">
+      <aside class="concierge-context">
+        <div class="context-copy">
+          <p class="overline">Your private watch desk</p>
+          <h1>Together,<br />let’s find<br />your <em>next</em><br />timepiece.</h1>
+          <p>Access to over <strong>$100M in inventory</strong> through our global dealer network. We can locate most watches within 24 hours.</p>
+        </div>
+        <div class="assurances">
+          <div><b>01</b><span><strong>Authenticity</strong>Every piece is carefully verified.</span></div>
+          <div><b>02</b><span><strong>Transparency</strong>Clear details, pricing, and process.</span></div>
+          <div><b>03</b><span><strong>Privacy</strong>Your request remains confidential.</span></div>
+        </div>
+        <p class="delivery-note"><span>◆</span> Simple · Straightforward · Secure · Hassle-free · Insured overnight shipping</p>
+      </aside>
+
+      <section class="mobile-entry" id="mobile-entry" aria-labelledby="mobile-entry-title">
+        <div class="entry-brand"><a class="entry-home" href="index.html" aria-label="Return to the Omni Timepieces private request introduction"><strong>OMNI TIMEPIECES</strong><span>Private Request</span></a><button type="button" data-sound-toggle aria-label="Toggle mechanical movement and interface sounds" aria-pressed="false"><i></i><span>Sound</span></button></div>
+        <div class="entry-copy">
+          <p>Your private watch desk</p>
+          <h1 id="mobile-entry-title">Together, let’s find your <em>next</em> timepiece.</h1>
+          <p>Tell us what you have in mind. One private concierge will guide the request from first detail to insured delivery.</p>
+        </div>
+        <div class="entry-proof" aria-label="Private desk capabilities"><div><strong>$100M+</strong><span>Global inventory access</span></div><div><strong>24H</strong><span>Most watches located</span></div></div>
+        <div class="entry-pillars"><span>Authenticity</span><i></i><span>Transparency</span><i></i><span>Privacy</span></div>
+        <button class="entry-start" id="mobile-start" type="button">Let’s get started <span>→</span></button>
+        <p class="entry-delivery">Simple · Secure · Insured overnight shipping</p>
+      </section>
+
+      <div class="request-card">
+        <div class="card-head">
+          <div class="mobile-mark">
+            <a class="mobile-home" href="index.html" aria-label="Return to the Omni Timepieces private request introduction"><strong>OMNI TIMEPIECES</strong><span>Private Request</span></a><div class="mobile-actions"><button type="button" data-sound-toggle aria-label="Toggle mechanical movement and interface sounds" aria-pressed="false"><i></i><span>Sound</span></button><button id="mobile-intro" type="button">← Introduction</button></div>
+          </div>
+          <div class="progress-meta"><p id="step-label">The maison</p><span id="step-count">01 / 09</span></div>
+          <div class="progress-track" role="progressbar" aria-label="Request progress" aria-valuemin="1" aria-valuemax="9" aria-valuenow="1"><i></i></div>
+          <div class="watch-tabs" id="watch-tabs" hidden aria-label="Watches in this request" aria-live="polite"></div>
+        </div>
+
+        <form id="request-form" novalidate>
+          <section class="step is-active" data-step="1" aria-labelledby="step-1-title">
+            <div class="question"><p>Let’s start with the maison.</p><h2 id="step-1-title" tabindex="-1">Which brand are we looking for?</h2><span>Choose one. You can always refine it later.</span></div>
+            <div class="brand-grid" data-choice="brand">
+              <button type="button" data-value="Rolex">Rolex</button><button type="button" data-value="Patek Philippe">Patek Philippe</button>
+              <button type="button" data-value="Audemars Piguet">Audemars Piguet</button><button type="button" data-value="Richard Mille">Richard Mille</button>
+              <button type="button" data-value="Vacheron Constantin">Vacheron Constantin</button><button type="button" data-value="F.P. Journe">F.P. Journe</button>
+              <button type="button" data-value="Omega">Omega</button><button type="button" data-value="Other">Another brand <small>Tell us which</small></button>
+            </div>
+            <input type="hidden" name="brand" id="brand" />
+            <div class="inline-field" id="other-brand-wrap" hidden><label for="other-brand">Brand name</label><input id="other-brand" name="otherBrand" type="text" placeholder="Enter the brand" autocomplete="off" /></div>
+            <p class="form-error" role="alert"></p>
+          </section>
+
+          <section class="step" data-step="2" aria-labelledby="step-2-title" hidden>
+            <div class="question"><p id="watch-prompt">A little direction is plenty.</p><h2 id="step-2-title" tabindex="-1">What are we looking for today?</h2><span id="watch-helper">Share the exact reference, or let us guide you.</span></div>
+            <div class="suggestions" id="model-suggestions" aria-label="Popular models"></div>
+            <p class="catalog-note"><span>↕</span> Tap a field to browse curated options. You can still type any exact variation.</p>
+            <div class="form-row">
+              <div class="line-field catalog-field"><label id="model-label" for="model">Model or collection</label><input id="model" name="model" type="text" list="watch-model-options" placeholder="e.g. Nautilus, Royal Oak, Daytona" autocomplete="off" /></div>
+              <div class="line-field catalog-field"><label id="reference-label" for="reference">Reference <span>Optional</span></label><input id="reference" name="reference" type="text" list="watch-reference-options" placeholder="e.g. 126500LN" autocomplete="off" /></div>
+            </div>
+            <div class="value-details">
+              <p><span id="configuration-heading">Details that can influence value</span><small>Optional · Leave open if you’re unsure</small></p>
+              <div class="form-row">
+                <div class="line-field catalog-field"><label id="year-label" for="year">Year preference <span>Optional</span></label><input id="year" name="year" type="text" list="watch-year-options" inputmode="numeric" placeholder="e.g. 2022, birth year, current" autocomplete="off" /></div>
+                <div class="line-field catalog-field"><label id="dial-label" for="dial">Dial preference <span>Optional</span></label><input id="dial" name="dial" type="text" list="watch-dial-options" placeholder="e.g. Blue, motif, factory diamond" autocomplete="off" /></div>
+              </div>
+              <div class="configuration-fields" id="configuration-fields">
+                <div class="line-field configuration-field" id="material-field" hidden><label id="material-label" for="case-material">Case material <span>Optional</span></label><select id="case-material" name="caseMaterial"><option value="">Open to the right material</option></select><small id="material-help">Material can meaningfully affect availability and value.</small><div class="select-other" id="material-other-wrap" hidden><label for="case-material-other">Describe the material</label><input id="case-material-other" name="caseMaterialOther" type="text" placeholder="e.g. Carbon TPT® with red Quartz TPT®" autocomplete="off" /></div></div>
+                <div class="line-field configuration-field" id="bracelet-field" hidden><label id="bracelet-label" for="bracelet">Bracelet or strap <span>When applicable</span></label><select id="bracelet" name="bracelet"><option value="">Open to the right configuration</option></select><small id="bracelet-help">Shown when the watch is offered in configurations that can affect value.</small><div class="select-other" id="bracelet-other-wrap" hidden><label for="bracelet-other">Describe the configuration</label><input id="bracelet-other" name="braceletOther" type="text" placeholder="e.g. White factory Velcro® strap" autocomplete="off" /></div></div>
+              </div>
+            </div>
+            <button class="guidance-choice" id="guidance-choice" type="button"><span>◇</span><strong>I’d like your guidance</strong><small>Describe it naturally and we’ll organize the details</small></button>
+            <p class="form-error" role="alert"></p>
+          </section>
+
+          <section class="step" data-step="3" aria-labelledby="step-3-title" hidden>
+            <div class="question"><p>This helps us understand the brief.</p><h2 id="step-3-title" tabindex="-1">Is it for something special?</h2><span>Optional, but helpful when the details are still open.</span></div>
+            <div class="option-list two-up" data-choice="occasion">
+              <button type="button" data-value="For myself"><strong>For myself</strong><small>A personal acquisition</small></button><button type="button" data-value="A milestone"><strong>A milestone</strong><small>Something worth remembering</small></button>
+              <button type="button" data-value="A gift"><strong>A gift</strong><small>For someone important</small></button><button type="button" data-value="Adding to my collection"><strong>For the collection</strong><small>Filling a particular space</small></button>
+              <button type="button" data-value="Just exploring"><strong>Just exploring</strong><small>Seeing what is possible</small></button><button type="button" data-value="Prefer not to say"><strong>Prefer not to say</strong><small>Keep the brief simple</small></button>
+            </div>
+            <input type="hidden" name="occasion" id="occasion" /><p class="form-error" role="alert"></p>
+          </section>
+
+          <section class="step" data-step="4" aria-labelledby="step-4-title" hidden>
+            <div class="question"><p>Condition changes the search.</p><h2 id="step-4-title" tabindex="-1">How would you like the watch?</h2><span>We’ll only present pieces that match your preference.</span></div>
+            <div class="option-list" data-choice="condition"><button type="button" data-value="New / unworn"><strong>New / unworn</strong><small>Unworn condition, full presentation preferred</small></button><button type="button" data-value="Pre-owned"><strong>Pre-owned</strong><small>The right example, carefully inspected</small></button><button type="button" data-value="Open to either"><strong>Open to either</strong><small>Show me the strongest opportunity</small></button></div>
+            <input type="hidden" name="condition" id="condition" /><p class="form-error" role="alert"></p>
+          </section>
+
+          <section class="step" data-step="5" aria-labelledby="step-5-title" hidden>
+            <div class="question"><p>We’ll match the pace to you.</p><h2 id="step-5-title" tabindex="-1">How soon would you like it?</h2><span>Most watches can be located within 24 hours.</span></div>
+            <div class="option-list" data-choice="timeline"><button type="button" data-value="As soon as possible"><strong>As soon as possible</strong><small>I’m ready when the right watch is found</small></button><button type="button" data-value="Within 2 weeks"><strong>Within two weeks</strong><small>I have a near-term date in mind</small></button><button type="button" data-value="Within 1–3 months"><strong>Within 1–3 months</strong><small>I have time to compare</small></button><button type="button" data-value="No fixed timeline"><strong>No fixed timeline</strong><small>The right piece matters more than speed</small></button></div>
+            <input type="hidden" name="timeline" id="timeline" /><p class="form-error" role="alert"></p>
+          </section>
+
+          <section class="step" data-step="6" aria-labelledby="step-6-title" hidden>
+            <div class="question"><p>So we only bring you relevant options.</p><h2 id="step-6-title" tabindex="-1">What range feels comfortable?</h2><span>A range is enough. It remains private.</span></div>
+            <div class="budget-grid" data-choice="budget"><button type="button" data-value="Under $15,000">Under $15K</button><button type="button" data-value="$15,000–$30,000">$15K–$30K</button><button type="button" data-value="$30,000–$60,000">$30K–$60K</button><button type="button" data-value="$60,000–$100,000">$60K–$100K</button><button type="button" data-value="$100,000–$250,000">$100K–$250K</button><button type="button" data-value="$250,000+">$250K+</button><button type="button" data-value="Flexible">Flexible</button><button type="button" data-value="Custom">Custom range</button></div>
+            <input type="hidden" name="budget" id="budget" />
+            <input type="hidden" id="currency" name="currency" value="USD" />
+            <div class="custom-budget" id="custom-budget" hidden><div class="line-field"><label for="budget-min">From <span>USD</span></label><input id="budget-min" name="budgetMin" type="number" min="0" step="500" inputmode="numeric" placeholder="$25,000" /></div><div class="line-field"><label for="budget-max">Up to <span>USD</span></label><input id="budget-max" name="budgetMax" type="number" min="0" step="500" inputmode="numeric" placeholder="$50,000" /></div></div>
+            <p class="form-error" role="alert"></p>
+          </section>
+
+          <section class="step" data-step="7" aria-labelledby="step-7-title" hidden>
+            <div class="question"><p>One last detail before your introduction.</p><h2 id="step-7-title" tabindex="-1">Would you like to trade a watch?</h2><span>We can coordinate one or several evaluations with your acquisition.</span></div>
+            <div class="option-list two-up" data-choice="tradeIn"><button type="button" data-value="No"><strong>Not this time</strong><small>This is a direct acquisition</small></button><button type="button" data-value="Yes"><strong>Yes, I have a trade</strong><small>One or several watches to evaluate</small></button></div>
+            <input type="hidden" name="tradeIn" id="trade-in" />
+            <div class="trade-details" id="trade-details" hidden>
+              <div class="trade-manager">
+                <div class="trade-manager-copy"><strong id="trade-editor-label">Trade-in 01</strong><span>Each piece is evaluated separately.</span></div>
+                <div class="trade-tabs" id="trade-tabs" aria-label="Watches offered for trade"></div>
+                <button class="add-trade" id="add-trade" type="button"><span>＋</span> Add another trade-in</button>
+              </div>
+              <p class="catalog-note trade-catalog-note"><span>↕</span> Browse common details or type the exact configuration.</p>
+              <div class="line-field catalog-field"><label for="trade-brand">Brand</label><input id="trade-brand" name="tradeBrand" type="text" list="watch-brand-options" placeholder="Select or enter a brand" autocomplete="off" /></div>
+              <div class="line-field catalog-field"><label for="trade-model">Model</label><input id="trade-model" name="tradeModel" type="text" list="trade-model-options" placeholder="Select or enter a model" autocomplete="off" /></div>
+              <div class="line-field catalog-field"><label for="trade-reference">Reference <span>Optional</span></label><input id="trade-reference" name="tradeReference" type="text" list="trade-reference-options" placeholder="Select or enter the reference" autocomplete="off" /></div>
+              <div class="line-field catalog-field"><label for="trade-year">Year <span>Optional</span></label><input id="trade-year" name="tradeYear" type="text" list="watch-year-options" inputmode="numeric" placeholder="Select or enter the year" autocomplete="off" /></div>
+              <div class="line-field catalog-field"><label for="trade-dial">Dial <span>Optional</span></label><input id="trade-dial" name="tradeDial" type="text" list="trade-dial-options" placeholder="Select or enter the dial" autocomplete="off" /></div>
+              <div class="line-field catalog-field"><label for="trade-bracelet">Bracelet / strap <span>If applicable</span></label><input id="trade-bracelet" name="tradeBracelet" type="text" list="trade-bracelet-options" placeholder="Select or enter the configuration" autocomplete="off" /></div>
+              <div class="line-field"><label for="trade-condition">Condition</label><select id="trade-condition" name="tradeCondition"><option value="">Choose condition</option><option>Unworn</option><option>Excellent</option><option>Good</option><option>Fair</option><option>Needs service</option></select></div>
+              <div class="line-field"><label for="trade-set">What comes with it?</label><select id="trade-set" name="tradeSet"><option value="">Choose presentation</option><option>Watch only</option><option>Watch + card / papers</option><option>Complete set — box + card / papers</option><option>Other / not sure</option></select><div class="select-other" id="trade-set-other-wrap" hidden><label for="trade-set-other">Add what you know <span>Optional</span></label><input id="trade-set-other" name="tradeSetOther" type="text" placeholder="e.g. Watch, box and service papers" autocomplete="off" /></div></div>
+              <div class="line-field trade-value"><label for="trade-expected-value">Expected trade value <span>Optional · USD</span></label><div class="amount-field"><input id="trade-expected-value" name="tradeExpectedValue" type="number" min="0" step="500" inputmode="numeric" placeholder="25,000" /><span>USD</span></div><input type="hidden" id="trade-currency" name="tradeCurrency" value="USD" /><small>Your expectation helps frame the conversation; it is not a final appraisal.</small></div>
+            </div>
+            <p class="form-error" role="alert"></p>
+          </section>
+
+          <datalist id="watch-brand-options"></datalist>
+          <datalist id="watch-model-options"></datalist>
+          <datalist id="watch-reference-options"></datalist>
+          <datalist id="watch-year-options"></datalist>
+          <datalist id="watch-dial-options"></datalist>
+          <datalist id="trade-model-options"></datalist>
+          <datalist id="trade-reference-options"></datalist>
+          <datalist id="trade-dial-options"></datalist>
+          <datalist id="trade-bracelet-options"></datalist>
+
+          <section class="step" data-step="8" aria-labelledby="step-8-title" hidden>
+            <div class="question compact"><p>Your private introduction.</p><h2 id="step-8-title" tabindex="-1">Where should your concierge reach you?</h2><span>One specialist will handle your request from here.</span></div>
+            <div class="contact-grid"><div class="line-field full"><label for="full-name">Full name</label><input id="full-name" name="fullName" type="text" autocomplete="name" placeholder="Your name" /></div><div class="line-field"><label for="email">Email</label><input id="email" name="email" type="email" autocomplete="email" inputmode="email" placeholder="you@example.com" /></div><div class="line-field"><label for="phone">Phone</label><input id="phone" name="phone" type="tel" autocomplete="tel" inputmode="tel" placeholder="+1 212 555 0188" /></div><div class="line-field full"><label for="location">City / country</label><input id="location" name="location" type="text" autocomplete="address-level2" placeholder="e.g. Miami, USA" /></div></div>
+            <fieldset class="contact-choice"><legend>How may we contact you?</legend><div data-choice="preferredContact"><button type="button" data-value="Text message">Text</button><button type="button" data-value="WhatsApp">WhatsApp</button><button type="button" data-value="Email">Email</button><button type="button" data-value="Phone call">Call</button></div><input type="hidden" name="preferredContact" id="preferred-contact" /></fieldset>
+            <p class="form-error" role="alert"></p>
+          </section>
+
+          <section class="step review-step" data-step="9" aria-labelledby="step-9-title" hidden>
+            <div class="question compact"><p>One final look.</p><h2 id="step-9-title" tabindex="-1">Confirm your private request.</h2><span>Review the details below before your concierge begins.</span></div>
+            <div class="review-grid" id="request-review"></div>
+            <div class="review-actions"><button class="add-watch" id="add-another-watch" type="button"><span>＋</span> Add another watch</button><button type="button" data-review-edit="2">Edit active watch</button><button type="button" data-review-edit="7">Edit trade</button><button type="button" data-review-edit="8">Edit contact</button></div>
+            <label class="consent"><input type="checkbox" id="consent" name="consent" /><i></i><span>I’m comfortable being contacted about this request through my selected method.</span></label>
+            <p class="review-legal">Your information is handled according to our <button type="button" data-legal="privacy-dialog">Privacy</button> and <button type="button" data-legal="terms-dialog">Terms</button>.</p>
+            <p class="form-error" role="alert"></p><p class="submit-error" id="submit-error" role="alert" hidden></p>
+          </section>
+
+          <div class="form-nav"><button class="back" id="back" type="button" disabled><span>←</span> Back</button><p class="save-note"><i></i> Private &amp; saved on this device</p><button class="continue" id="continue" type="button">Continue <span>→</span></button><button class="continue submit" id="submit" type="submit" hidden>Send private request <span>→</span></button></div>
+        </form>
+
+        <section class="success" id="success" hidden aria-labelledby="success-title"><div class="success-seal"><span>✓</span></div><p>Private request received</p><h2 id="success-title">Your concierge will<br />take it from here.</h2><p id="success-copy">We’ll review your brief and reach out through your preferred method. Most requests receive a personal response within one business day.</p><div class="trade-photo-next" id="trade-photo-next" hidden><strong id="trade-photo-title">For your trade appraisal</strong><span id="trade-photo-copy">Your concierge will ask for three simple photos: the dial, caseback, and everything included with the watch.</span></div><div class="ticket"><span>Request</span><strong id="request-id">WR—PENDING</strong></div><div class="success-actions"><a class="explore-site" id="explore-site" href="https://omnitimepieces.com" target="_blank" rel="noopener noreferrer">Explore Omni Timepieces <span>↗</span></a><button type="button" id="new-request">Start another request</button></div></section>
+      </div>
+
+      <dialog class="assistant-dialog" id="watch-assistant-dialog" aria-labelledby="assistant-title">
+        <div class="assistant-panel">
+          <header class="assistant-head"><div><span><i></i> Private concierge assist</span><strong>OMNI TIMEPIECES</strong></div><button class="assistant-close" type="button" aria-label="Close concierge assist">×</button></header>
+          <section class="assistant-compose" id="assistant-compose">
+            <p>Speak naturally. We’ll organize the details.</p>
+            <h2 id="assistant-title">What do you have in mind?</h2>
+            <label for="assistant-brief">Your watch brief</label>
+            <textarea id="assistant-brief" rows="4" maxlength="600" placeholder="For example: A 2023 or newer Daytona with a white dial, unworn, up to $45,000."></textarea>
+            <div class="assistant-compose-actions"><button class="assistant-example" id="assistant-example" type="button">Use an example</button><button class="assistant-interpret" id="assistant-interpret" type="button">Understand my request <span>→</span></button></div>
+            <p class="assistant-error" id="assistant-error" role="alert"></p>
+          </section>
+          <section class="assistant-result" id="assistant-result" hidden aria-live="polite">
+            <div class="assistant-understanding"><div class="assistant-result-heading"><div><p>Here’s what I understood</p><h2>Does this feel right?</h2></div><div class="assistant-selection"><span id="assistant-watch-brand">Your selection</span><strong id="assistant-watch-model">Watch</strong></div></div><div class="assistant-chips" id="assistant-chips"></div><div class="assistant-follow-up"><span>One useful question</span><strong id="assistant-follow-up">Is there anything you would like us to keep open?</strong></div><div class="assistant-result-actions"><button class="assistant-use" id="assistant-use" type="button">Use these details <span>→</span></button><button class="assistant-revise" id="assistant-revise" type="button">Adjust my description</button></div></div>
+          </section>
+          <footer class="assistant-privacy"><span>◇</span><p><strong>Your request stays in your control.</strong> Only watch preferences are considered here. Review and edit every detail before submitting.</p></footer>
+        </div>
+      </dialog>
+    </section>
+
+    <footer class="mobile-trust" aria-label="Private desk capabilities"><span>$100M+ global network</span><i></i><span>Most watches within 24H</span></footer>
+    <nav class="legal-links" aria-label="Legal"><button type="button" data-legal="privacy-dialog">Privacy</button><span>·</span><button type="button" data-legal="terms-dialog">Terms</button></nav>
+  </main>
+  <dialog class="legal-dialog" id="privacy-dialog"><div><button class="legal-close" type="button" aria-label="Close privacy policy">×</button><p>OMNI TIMEPIECES</p><h2>Privacy</h2><p>We collect the watch preferences, budget, trade-in information, location, and contact details you provide so we can respond to and fulfill your private request.</p><p>Your information is used by our private desk and, when necessary, trusted dealers or service partners involved in locating, evaluating, or delivering your watch. We do not sell your personal information.</p><p>You may ask us to correct or delete your request information by contacting your concierge. We retain request information only as long as needed to provide the service and meet applicable legal obligations.</p></div></dialog>
+  <dialog class="legal-dialog" id="terms-dialog"><div><button class="legal-close" type="button" aria-label="Close terms">×</button><p>OMNI TIMEPIECES</p><h2>Terms</h2><p>A private request is an invitation to locate a watch; it is not a purchase agreement or guarantee of availability. Pricing, condition, provenance, and delivery terms are confirmed before any acquisition.</p><p>Trade-in expectations are not final appraisals. Final values require inspection and verification. The 24-hour statement describes our typical ability to locate most watches, not a guaranteed delivery time.</p><p>Payment, authentication, insurance, returns, and shipping terms will be presented for approval before a transaction is completed.</p></div></dialog>
+  <script src="app.js" defer></script>
+</body>
+</html>
