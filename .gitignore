@@ -2,3 +2,4 @@
 .vercel
 .tools/
 *.log
+.env*
