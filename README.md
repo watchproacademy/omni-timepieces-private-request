@@ -56,8 +56,10 @@ The completed form posts to `/api/watch-request`. The Vercel function supports e
 ### Resend
 
 - `RESEND_API_KEY`
-- `WATCH_REQUEST_TO_EMAIL`
-- `WATCH_REQUEST_FROM_EMAIL`
+- `WATCH_REQUEST_TO_EMAIL` — the owner Gmail address that receives each inquiry. Separate multiple recipients with commas if needed.
+- `WATCH_REQUEST_FROM_EMAIL` — a sender address on a domain verified in Resend, for example `Omni Private Desk <requests@yourdomain.com>`.
+
+Resend is used whenever all three variables are set (even if an older webhook variable remains in Vercel). Client replies are directed to the inquirer's email address automatically.
 
 For a non-production demonstration, set `WATCH_REQUEST_PREVIEW_MODE=true`. Preview submissions are not delivered.
 
@@ -66,7 +68,8 @@ For a non-production demonstration, set `WATCH_REQUEST_PREVIEW_MODE=true`. Previ
 1. Push the repository to GitHub.
 2. Import it into Vercel using the `Other` framework preset.
 3. Add one delivery configuration above.
-4. Deploy and complete a real request test.
+4. For Resend, add the three Resend variables in **Vercel → Project → Settings → Environment Variables** for Production, Preview, and Development as appropriate. Do not put these values in the repository.
+5. Deploy and complete a real request test.
 
 No build command or output directory is required.
 

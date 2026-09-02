@@ -3,3 +3,4 @@
 .tools/
 *.log
 .env*
+!.env.example

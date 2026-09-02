@@ -124,6 +124,11 @@ async function deliverToWebhook(body, requestId) {
 }
 
 async function deliverWithResend(body, requestId) {
+  const recipients = process.env.WATCH_REQUEST_TO_EMAIL
+    .split(",")
+    .map((email) => email.trim())
+    .filter(Boolean);
+
   const response = await fetch("https://api.resend.com/emails", {
     method: "POST",
     headers: {
@@ -132,14 +137,18 @@ async function deliverWithResend(body, requestId) {
     },
     body: JSON.stringify({
       from: process.env.WATCH_REQUEST_FROM_EMAIL,
-      to: [process.env.WATCH_REQUEST_TO_EMAIL],
+      to: recipients,
       reply_to: body.email || undefined,
       subject: `${requestId} — ${Array.isArray(body.watches) && body.watches.length > 1 ? `${body.watches.length} watches` : `${body.brand} ${body.model}`}`,
       html: requestEmailHtml(body, requestId),
     }),
   });
 
-  if (!response.ok) throw new Error(`Email delivery failed with status ${response.status}`);
+  if (!response.ok) {
+    const detail = await response.json().catch(() => ({}));
+    console.error("Resend email delivery failed", { requestId, status: response.status, detail: detail.message });
+    throw new Error(`Email delivery failed with status ${response.status}`);
+  }
 }
 
 module.exports = async function handler(request, response) {
@@ -170,10 +179,10 @@ module.exports = async function handler(request, response) {
   const requestId = makeRequestId();
 
   try {
-    if (process.env.WATCH_REQUEST_WEBHOOK_URL) {
-      await deliverToWebhook(body, requestId);
-    } else if (process.env.RESEND_API_KEY && process.env.WATCH_REQUEST_TO_EMAIL && process.env.WATCH_REQUEST_FROM_EMAIL) {
+    if (process.env.RESEND_API_KEY && process.env.WATCH_REQUEST_TO_EMAIL && process.env.WATCH_REQUEST_FROM_EMAIL) {
       await deliverWithResend(body, requestId);
+    } else if (process.env.WATCH_REQUEST_WEBHOOK_URL) {
+      await deliverToWebhook(body, requestId);
     } else if (process.env.WATCH_REQUEST_PREVIEW_MODE === "true") {
       return response.status(200).json({ ok: true, preview: true, requestId });
     } else {
