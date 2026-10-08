@@ -1,0 +1,5 @@
+launch-kit/
+tests/
+.env*
+.tools/
+*.log

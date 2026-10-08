@@ -1397,7 +1397,7 @@ form.addEventListener("submit", async (event) => {
     } else {
       const response = await fetch("/api/watch-request", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
       result = await response.json().catch(() => ({}));
-      if (!response.ok) throw new Error(result.message || "Your request could not be delivered. Please try again.");
+      if (!response.ok || result.ok !== true || !result.requestId) throw new Error(result.message || "Your request could not be delivered. Please try again.");
     }
     form.hidden = true;
     success.hidden = false;
