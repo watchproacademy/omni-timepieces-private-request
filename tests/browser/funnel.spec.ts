@@ -10,7 +10,7 @@ async function choose(page: Page, name: string, automatic = true) {
  await page.getByRole('radio',{name,exact:true}).click();
  if(automatic) await expect(heading).not.toHaveText(before!);
 }
-async function appearance(page: Page, name: 'Light'|'Dark'|'System') { await page.getByRole('radio',{name:`${name} appearance`,exact:true}).click(); }
+async function appearance(page: Page, name: 'Light'|'Dark'|'System') { const option=page.getByRole('radio',{name:`${name} appearance`,exact:true}); if(!await option.isVisible()) await page.locator('.appearance-menu summary').click(); await option.click(); await page.locator('.appearance-menu summary').click(); }
 async function watch(page: Page, brand='Rolex',model='Daytona') {
  await choose(page,brand);await page.getByLabel('Model',{exact:true}).fill(model);await next(page);
  await choose(page,'For myself');await choose(page,'Pre-owned');await choose(page,'No fixed timeline');await choose(page,'Flexible');
@@ -56,9 +56,9 @@ test('both themes, narrow reflow and accessible controls',async({page})=>{
  await start(page);for(const theme of ['Light','Dark'] as const){await appearance(page,theme);await expect(page.locator('html')).toHaveAttribute('data-theme',theme.toLowerCase());expect((await new AxeBuilder({page}).withTags(['wcag2a','wcag2aa','wcag21aa']).analyze()).violations).toEqual([]);}
  await page.setViewportSize({width:320,height:500});const begin=page.getByRole('button',{name:'Begin your request'});if(await begin.isVisible())await begin.click();expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);await page.getByRole('button',{name:'Continue →'}).scrollIntoViewIfNeeded();await expect(page.getByRole('button',{name:'Continue →'})).toBeVisible();
 });
-test('public content, metadata, redirects and the visual directory remain crawlable',async({request,page})=>{
+test('public content, metadata, redirects and the compact menu remain crawlable',async({request,page})=>{
  const html=await(await request.get('/brands/rolex')).text();expect(html).toContain('Shape the configuration');expect(html).toContain('rel="canonical"');expect(html).toContain('BreadcrumbList');expect(html).toContain('noindex');
- await page.goto('/');await page.getByRole('link',{name:/Discover our service/}).click();await expect(page.getByRole('heading',{level:1})).toHaveText('Private watch sourcing');
+ await page.goto('/');await page.locator('.request-menu summary').click();await page.getByRole('link',{name:'Our service',exact:true}).click();await expect(page.getByRole('heading',{level:1})).toHaveText('Private watch sourcing');
  const redirect=await request.get('/index.html?brand=Rolex',{maxRedirects:0});expect(redirect.status()).toBe(308);expect(redirect.headers().location).toContain('?brand=Rolex');expect(await(await request.get('/llms.txt')).text()).toContain('Catalog entries are examples');expect(await(await request.get('/robots.txt')).text()).toContain('Disallow: /');
 });
 test('rare brands, custom trade descriptions and phone follow-up stay open until complete',async({page})=>{
@@ -105,6 +105,20 @@ test('themed pickers show choices, selected models, manual entry and clear guida
  await page.getByRole('button',{name:'I’d like your guidance',exact:true}).click();await expect(page.getByText(/Model left open. Your concierge/)).toBeVisible();await expect(page.getByRole('button',{name:'Watch 1 · Rolex · Guidance',exact:true})).toBeVisible();
 });
 test('all homepage watch images decode successfully',async({page})=>{
- await page.goto('/');const images=page.locator('img');expect(await images.count()).toBeGreaterThanOrEqual(4);
+ await page.goto('/');const images=page.locator('img');expect(await images.count()).toBeGreaterThanOrEqual(1);
  for(const img of await images.all()){await img.scrollIntoViewIfNeeded();await expect.poll(()=>img.evaluate(element=>(element as HTMLImageElement).complete && (element as HTMLImageElement).naturalWidth>0)).toBe(true);await img.evaluate(async element=>{await (element as HTMLImageElement).decode();});expect(await img.evaluate(element=>(element as HTMLImageElement).naturalWidth>0 && (element as HTMLImageElement).naturalHeight>0)).toBe(true);}
+});
+
+test('request starts immediately with a single-row mobile header and no promotional detour',async({page})=>{
+ await page.setViewportSize({width:390,height:844});await page.goto('/');
+ await expect(page.getByRole('button',{name:'Begin your request'})).toHaveCount(0);
+ await expect(page.getByRole('radiogroup',{name:'Watch brand'})).toBeVisible();
+ await expect(page.locator('.concierge-directory')).toHaveCount(0);
+ await expect(page.getByRole('button',{name:'Continue →',exact:true})).toBeEnabled();
+ await expect(page.locator('.item-tabs')).toHaveCount(0);
+ await expect(page.getByRole('heading',{name:'Which brand are we looking for?'})).not.toBeFocused();
+ const header=await page.locator('.request-topbar').boundingBox();expect(header!.height).toBeLessThan(80);
+ const choice=await page.getByRole('radio',{name:'Rolex',exact:true}).boundingBox();expect(choice!.y+choice!.height).toBeLessThan(844);
+ await page.setViewportSize({width:320,height:568});expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
+ await page.locator('.request-menu summary').click();await expect(page.getByRole('link',{name:'Our service',exact:true})).toBeVisible();
 });

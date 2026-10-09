@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import { resolveTheme, themeStorageKey, type ThemePreference } from '@/lib/theme';
 import { ControlIcon } from './control-icons';
 const options = ['light', 'dark', 'system'] as const;
-export function ThemeControl() {
+export function ThemeControl({ compact = false }: { compact?: boolean }) {
     const [preference, setPreference] = useState<ThemePreference>('system');
     const [ready, setReady] = useState(false);
     const group = useRef<HTMLDivElement>(null);
@@ -29,7 +29,7 @@ export function ThemeControl() {
         setPreference(value);
         try { localStorage.setItem(themeStorageKey, value); } catch { }
     }
-    return <div ref={group} className="theme-switch" role="radiogroup" aria-label="Appearance" data-preference={preference}>
+    const control = <div ref={group} className="theme-switch" role="radiogroup" aria-label="Appearance" data-preference={preference}>
         <span className="theme-thumb" aria-hidden="true" />
         {options.map((value, index) => <button key={value} type="button" role="radio" aria-checked={preference === value} tabIndex={preference === value ? 0 : -1} aria-label={`${value[0].toUpperCase()}${value.slice(1)} appearance`} title={`${value[0].toUpperCase()}${value.slice(1)} appearance`} onClick={() => choose(value)} onKeyDown={event => {
             const delta = event.key === 'ArrowRight' || event.key === 'ArrowDown' ? 1 : event.key === 'ArrowLeft' || event.key === 'ArrowUp' ? -1 : 0;
@@ -38,4 +38,5 @@ export function ThemeControl() {
             choose(options[next]); group.current?.querySelectorAll<HTMLButtonElement>('button')[next].focus();
         }}><ControlIcon name={value === 'light' ? 'sun' : value === 'dark' ? 'moon' : 'system'}/></button>)}
     </div>;
+    return compact ? <details className="appearance-menu"><summary aria-label="Appearance settings" title="Appearance settings"><ControlIcon name={preference === 'light' ? 'sun' : preference === 'dark' ? 'moon' : 'system'}/></summary><div className="header-popover">{control}</div></details> : control;
 }

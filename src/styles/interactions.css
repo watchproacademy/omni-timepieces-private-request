@@ -128,7 +128,6 @@ body[data-concierge-active=true] .gear-two, body[data-concierge-active=true] .se
  .concierge-context h1 { font-size: var(--text-hero-mobile); }
  .request-card { padding: var(--space-5) var(--space-4) 0; }
  .request-card.success { padding-bottom: var(--space-5); }
- .mobile-start { padding-bottom: var(--space-5); }
  .form-nav { padding-bottom: max(var(--space-4),env(safe-area-inset-bottom)); }
  .choice-brand .choices { gap: var(--space-2); }
  .choice-brand .choices button { padding: var(--space-3); min-height: 76px; }
@@ -171,3 +170,37 @@ body[data-concierge-active=true] .gear-two, body[data-concierge-active=true] .se
 .watch-guidance > p { color: var(--text-secondary); font-size: var(--text-label); margin-bottom: var(--space-3); }
 .guidance-actions { display: flex; flex-wrap: wrap; gap: var(--space-3); }
 .watch-guidance > .guidance-feedback { margin: var(--space-4) 0 0; color: var(--text-primary); }
+
+/* The request entrance is a quiet desk, with utilities tucked into one row. */
+.request-shell { max-width: 1100px; padding-top: var(--space-3); }
+.request-topbar { flex-wrap: nowrap; align-items: center; justify-content: space-between; gap: var(--space-2); padding-bottom: var(--space-3); }
+.request-topbar .wordmark { width: auto; text-align: left; min-width: 0; }
+.request-topbar .wordmark strong { font-size: var(--text-label); letter-spacing: .08em; }
+.request-topbar .wordmark > span { font-size: var(--text-small); letter-spacing: .04em; }
+.request-topbar .wordmark-detail { font: inherit; color: inherit; letter-spacing: inherit; }
+.request-topbar .header-tools { flex-wrap: nowrap; margin: 0; gap: var(--space-1); }
+.request-topbar .sound-toggle { min-width: 44px; height: 44px; padding: 0; }
+.request-topbar .sound-wave { display: none; }
+.request-topbar .sound-control svg { width: 18px; height: 18px; }
+.appearance-menu, .request-menu { position: relative; }
+.appearance-menu summary, .request-menu summary { display: grid; place-items: center; width: 44px; height: 44px; cursor: pointer; list-style: none; color: var(--text-secondary); border-radius: 50%; border: 1px solid var(--border-control); background: var(--surface-input); }
+.appearance-menu summary::-webkit-details-marker, .request-menu summary::-webkit-details-marker { display: none; }
+.appearance-menu summary svg { width: 18px; height: 18px; }
+.request-topbar summary:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 3px; }
+.header-popover { position: absolute; z-index: 30; right: 0; top: calc(100% + var(--space-2)); padding: var(--space-3); background: var(--surface-card); border: 1px solid var(--border-default); border-radius: var(--radius-control); box-shadow: var(--shadow-card); }
+.request-menu nav { min-width: 210px; display: grid; }
+.request-menu a { min-height: 44px; display: flex; align-items: center; text-decoration: none; padding-inline: var(--space-3); white-space: nowrap; }
+.request-menu a:hover { background: var(--surface-raised); }
+.request-workspace { max-width: 760px; margin: var(--space-5) auto; }
+.request-footer { max-width: 760px; margin: auto; display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: var(--space-3); font-size: var(--text-small); color: var(--text-secondary); }
+.request-footer nav { display: flex; gap: var(--space-4); }
+.request-footer a { display: inline-flex; align-items: center; min-height: 44px; }
+@media(max-width:760px) {
+ .request-shell { padding: var(--space-2) max(16px,env(safe-area-inset-right)) var(--space-4) max(16px,env(safe-area-inset-left)); }
+ .request-topbar .wordmark-detail { display: none; }
+ .request-workspace { margin-block: var(--space-4); }
+ .request-workspace .request-card { padding: var(--space-4); }
+ .request-workspace .choice-brand .choices { grid-template-columns: repeat(2,minmax(0,1fr)); }
+ .request-workspace .choice-brand .choices button { padding: var(--space-3); }
+ .request-workspace .choice-brand .choice-copy strong { font-size: var(--text-body); }
+}
