@@ -1,15 +1,17 @@
 'use client';
-import { useId, useRef, useState } from 'react';
+import { useId, useRef, useState, type InputHTMLAttributes } from 'react';
+import { SuggestionInput } from './suggestion-input';
 import { ControlIcon } from './control-icons';
 import { useSound } from './sound';
-export function Field({ label, value, onChange, options = [], type = 'text', required = false, autoComplete, placeholder, error }: {
+export function Field({ label, value, onChange, options, type = 'text', required = false, autoComplete, placeholder, error }: {
     label: string; value: string | number | undefined; onChange: (value: string) => void; options?: readonly string[];
     type?: string; required?: boolean; autoComplete?: string; placeholder?: string; error?: string;
 }) {
     const id = useId();
     const [blurError, setBlurError] = useState('');
     const message = error || blurError;
-    return <div className="field"><label htmlFor={id}>{label}{!required ? <span aria-hidden="true">Optional</span> : null}</label><input id={id} value={value ?? ''} onChange={e => { setBlurError(''); onChange(e.target.value); }} onBlur={e => { const input = e.currentTarget; setBlurError(required && !input.value.trim() ? `Enter your ${label.toLowerCase()}.` : input.validity.typeMismatch ? `Enter a valid ${type === 'url' ? 'link' : label.toLowerCase()}.` : ''); }} type={type} list={options.length ? `${id}-list` : undefined} required={required} autoComplete={autoComplete || 'off'} placeholder={placeholder} aria-invalid={Boolean(message)} aria-describedby={message ? `${id}-error` : undefined} maxLength={type === 'email' ? 254 : 150} inputMode={type === 'number' ? 'decimal' : type === 'tel' ? 'tel' : type === 'email' ? 'email' : undefined} enterKeyHint="next"/>{options.length ? <datalist id={`${id}-list`}>{options.map(option => <option key={option} value={option}/>)}</datalist> : null}{message ? <p className="error" id={`${id}-error`}>{message}</p> : null}</div>;
+    const inputProps: InputHTMLAttributes<HTMLInputElement> = { id, value: value ?? '', onChange: e => { setBlurError(''); onChange(e.target.value); }, onBlur: e => { const input = e.currentTarget; setBlurError(required && !input.value.trim() ? `Enter your ${label.toLowerCase()}.` : input.validity.typeMismatch ? `Enter a valid ${type === 'url' ? 'link' : label.toLowerCase()}.` : ''); }, type, required, autoComplete: autoComplete || 'off', placeholder, 'aria-invalid': Boolean(message), 'aria-describedby': message ? `${id}-error` : undefined, maxLength: type === 'email' ? 254 : 150, inputMode: type === 'number' ? 'decimal' : type === 'tel' ? 'tel' : type === 'email' ? 'email' : undefined, enterKeyHint: 'next' };
+    return <div className="field"><label htmlFor={id}>{label}{!required ? <span aria-hidden="true">Optional</span> : null}</label>{options ? <SuggestionInput label={label} options={options} inputProps={inputProps} onSelect={value => { setBlurError(''); onChange(value); }}/> : <input {...inputProps}/>}{message ? <p className="error" id={`${id}-error`}>{message}</p> : null}</div>;
 }
 export function SelectField({ label, value, options, onChange, required = false }: {
     label: string; value: string; options: readonly string[]; onChange: (value: string) => void; required?: boolean;
