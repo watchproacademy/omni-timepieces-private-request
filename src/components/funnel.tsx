@@ -29,7 +29,6 @@ function RequestFunnel() {
     useEffect(() => { latest.current = state; }, [state]);
     useEffect(() => () => { if (advanceTimer.current) clearTimeout(advanceTimer.current); }, [state.step, state.activeWatchId]);
     const heading = useRef<HTMLHeadingElement>(null);
-    const firstReady = useRef(true);
     const busy = useRef(false);
     const keyRef = useRef('');
     const submittedPayload = useRef('');
@@ -37,8 +36,7 @@ function RequestFunnel() {
     const watch = state.watches.find(w => w.id === state.activeWatchId) || state.watches[0];
     const step = steps[state.step];
     useEffect(() => { if (ready) {
-        if (!firstReady.current || state.step > 0 || state.accepted) heading.current?.focus();
-        firstReady.current = false;
+        heading.current?.focus();
         track('private_request_step_viewed', { step: state.step + 1 });
     } }, [state.step, ready, state.accepted]);
     function cancelAdvance() { if (advanceTimer.current) clearTimeout(advanceTimer.current); advanceTimer.current = null; }

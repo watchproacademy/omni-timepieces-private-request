@@ -1,9 +1,11 @@
-/** A short mechanical click, created only after a user explicitly enables sound. */
+/** Quiet alternating clock ticks, started only by an explicit user gesture. */
 export class ConciergeAudio {
     private context: AudioContext | null = null;
     private master: GainNode | null = null;
     private enabled = false;
-    private volume = .25;
+    private volume = .12;
+    private timer: ReturnType<typeof setInterval> | null = null;
+    private beat = 0;
     private generation = 0;
     async enable() {
         const generation = ++this.generation;
@@ -19,10 +21,15 @@ export class ConciergeAudio {
         if (this.context.state !== 'running') throw new Error('Audio could not start.');
         if (generation !== this.generation) return;
         this.enabled = true;
-        this.tick();
+        if (this.timer) clearInterval(this.timer);
+        this.beat = 0;
+        this.playBeat();
+        this.timer = setInterval(() => this.playBeat(), 500);
     }
-    disable() { this.generation++; this.enabled = false; void this.context?.suspend().catch(() => {}); }
-    tick() {
+    disable() { if (this.timer) clearInterval(this.timer); this.timer = null; this.generation++; this.enabled = false; void this.context?.suspend().catch(() => {}); }
+    // Interaction hooks stay silent so clicks cannot disrupt the clock rhythm.
+    tick() {}
+    private playBeat() {
         const context = this.context;
         if (!this.enabled || !context || context.state !== 'running' || !this.master) return;
         const duration = .05;
@@ -30,11 +37,11 @@ export class ConciergeAudio {
         const samples = buffer.getChannelData(0);
         for (let i = 0; i < samples.length; i++) samples[i] = (Math.random() * 2 - 1) * Math.exp(-i / (context.sampleRate * .009));
         const source = context.createBufferSource(); source.buffer = buffer;
-        const filter = context.createBiquadFilter(); filter.type = 'bandpass'; filter.frequency.value = 1800; filter.Q.value = .7;
+        const filter = context.createBiquadFilter(); filter.type = 'bandpass'; filter.frequency.value = this.beat++ % 2 ? 1250 : 1900; filter.Q.value = .7;
         const gain = context.createGain(); gain.gain.value = .7;
         source.connect(filter).connect(gain).connect(this.master);
         source.onended = () => { source.disconnect(); filter.disconnect(); gain.disconnect(); };
         source.start(); source.stop(context.currentTime + duration);
     }
-    dispose() { this.generation++; this.enabled = false; void this.context?.close().catch(() => {}); }
+    dispose() { this.disable(); void this.context?.close().catch(() => {}); }
 }

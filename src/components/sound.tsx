@@ -22,7 +22,12 @@ export function SoundProvider({ children }: { children: ReactNode }) {
         engine.current ||= new ConciergeAudio();
         const audio = engine.current;
         setError(''); setLoading(true);
-        try { await audio.enable(); if (current === intent.current.version && !document.hidden) setEnabled(true); else audio.disable(); }
+        try {
+            await audio.enable();
+            // An older start must never switch off a newer on/off/on request.
+            if (current !== intent.current.version) return;
+            if (document.hidden) { audio.disable(); setEnabled(false); } else setEnabled(true);
+        }
         catch { if (current === intent.current.version) { setEnabled(false); setError('Sound could not start. Please try again.'); } }
         finally { if (current === intent.current.version) setLoading(false); }
     }

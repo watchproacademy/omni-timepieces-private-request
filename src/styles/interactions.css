@@ -204,3 +204,15 @@ body[data-concierge-active=true] .gear-two, body[data-concierge-active=true] .se
  .request-workspace .choice-brand .choices button { padding: var(--space-3); }
  .request-workspace .choice-brand .choice-copy strong { font-size: var(--text-body); }
 }
+
+.request-intro { max-width: 760px; margin: clamp(44px,9vh,110px) auto var(--space-5); }
+.request-intro h1 { font-size: clamp(2.8rem,6vw,5rem); margin-bottom: var(--space-5); }
+.intro-description { max-width: 580px; color: var(--text-secondary); }
+.intro-proof { display: grid; grid-template-columns: 1fr 1fr; margin: var(--space-6) 0 var(--space-4); border-block: 1px solid var(--border-default); }
+.intro-proof > div { padding: var(--space-4) 0; }
+.intro-proof > div + div { padding-left: var(--space-5); border-left: 1px solid var(--border-default); }
+.intro-proof dt { font-family: var(--font-display); color: var(--accent); font-size: var(--text-section); line-height: 1.2; }
+.intro-proof dd { margin: var(--space-2) 0 0; color: var(--text-secondary); font-size: var(--text-label); }
+.intro-values { display: flex; justify-content: center; gap: var(--space-3); font-size: var(--text-small); color: var(--text-secondary); }
+.intro-start { width: 100%; justify-content: space-between; min-height: 56px; }
+@media(max-width:760px) { .request-intro { margin-top: clamp(44px,10svh,100px); } .request-intro h1 br { display: none; } }

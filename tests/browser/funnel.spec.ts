@@ -1,7 +1,7 @@
 import { test, expect, type Page } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
 async function start(page: Page, url = '/') {
- await page.goto(url);const begin=page.getByRole('button',{name:'Begin your request'});if(await begin.isVisible())await begin.click();
+ await page.goto(url);const begin=page.getByRole('button',{name:'Let’s get started'});if(await begin.isVisible())await begin.click();
  await expect(page.getByRole('button',{name:'Continue →',exact:true})).toBeEnabled();
 }
 async function next(page: Page) { await page.getByRole('button',{name:/^(Continue →|Save and return to review)$/}).click(); }
@@ -10,7 +10,7 @@ async function choose(page: Page, name: string, automatic = true) {
  await page.getByRole('radio',{name,exact:true}).click();
  if(automatic) await expect(heading).not.toHaveText(before!);
 }
-async function appearance(page: Page, name: 'Light'|'Dark'|'System') { const option=page.getByRole('radio',{name:`${name} appearance`,exact:true}); if(!await option.isVisible()) await page.locator('.appearance-menu summary').click(); await option.click(); await page.locator('.appearance-menu summary').click(); }
+async function appearance(page: Page, name: 'Light'|'Dark') { const option=page.getByRole('radio',{name:`${name} appearance`,exact:true}); if(!await option.isVisible()) await page.locator('.appearance-menu summary').click(); await option.click(); await page.locator('.appearance-menu summary').click(); }
 async function watch(page: Page, brand='Rolex',model='Daytona') {
  await choose(page,brand);await page.getByLabel('Model',{exact:true}).fill(model);await next(page);
  await choose(page,'For myself');await choose(page,'Pre-owned');await choose(page,'No fixed timeline');await choose(page,'Flexible');
@@ -35,7 +35,7 @@ test('prefill, dependent model resets, and draft restoration preserve the active
  await start(page,'/?brand=Rolex&model=Daytona&reference=126500LN&utm_source=test');await next(page);
  await expect(page.getByLabel('Model',{exact:true})).toHaveValue('Daytona');await expect(page.getByRole('combobox',{name:'Reference',exact:true})).toHaveValue('126500LN');
  await page.getByLabel('Model',{exact:true}).fill('Datejust');await expect(page.getByRole('combobox',{name:'Reference',exact:true})).toHaveValue('');await page.waitForTimeout(250);
- await page.evaluate(()=>history.replaceState(null,'','/'));await page.reload();const begin=page.getByRole('button',{name:'Begin your request'});if(await begin.isVisible())await begin.click();await expect(page.getByLabel('Model',{exact:true})).toHaveValue('Datejust');
+ await page.evaluate(()=>history.replaceState(null,'','/'));await page.reload();const begin=page.getByRole('button',{name:'Let’s get started'});if(await begin.isVisible())await begin.click();await expect(page.getByLabel('Model',{exact:true})).toHaveValue('Datejust');
 });
 test('multiple watches and trades retain details and review edits return directly',async({page})=>{
  await start(page);await watch(page);await page.getByRole('button',{name:'Add another requested watch'}).click();await watch(page,'Rolex','Datejust');await choose(page,'Yes',false);
@@ -54,7 +54,7 @@ test('failed submissions retain the draft and retry with one idempotency key',as
 });
 test('both themes, narrow reflow and accessible controls',async({page})=>{
  await start(page);for(const theme of ['Light','Dark'] as const){await appearance(page,theme);await expect(page.locator('html')).toHaveAttribute('data-theme',theme.toLowerCase());expect((await new AxeBuilder({page}).withTags(['wcag2a','wcag2aa','wcag21aa']).analyze()).violations).toEqual([]);}
- await page.setViewportSize({width:320,height:500});const begin=page.getByRole('button',{name:'Begin your request'});if(await begin.isVisible())await begin.click();expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);await page.getByRole('button',{name:'Continue →'}).scrollIntoViewIfNeeded();await expect(page.getByRole('button',{name:'Continue →'})).toBeVisible();
+ await page.setViewportSize({width:320,height:500});const begin=page.getByRole('button',{name:'Let’s get started'});if(await begin.isVisible())await begin.click();expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);await page.getByRole('button',{name:'Continue →'}).scrollIntoViewIfNeeded();await expect(page.getByRole('button',{name:'Continue →'})).toBeVisible();
 });
 test('public content, metadata, redirects and the compact menu remain crawlable',async({request,page})=>{
  const html=await(await request.get('/brands/rolex')).text();expect(html).toContain('Shape the configuration');expect(html).toContain('rel="canonical"');expect(html).toContain('BreadcrumbList');expect(html).toContain('noindex');
@@ -68,10 +68,10 @@ test('rare brands, custom trade descriptions and phone follow-up stay open until
  for(const theme of ['Light','Dark'] as const){await appearance(page,theme);expect((await new AxeBuilder({page}).withTags(['wcag2a','wcag2aa','wcag21aa']).analyze()).violations).toEqual([]);}
  await page.getByRole('checkbox').check();await page.getByRole('button',{name:'Send private request'}).click();await expect(page.getByText('Demo complete. No request or email was sent.')).toBeVisible();
 });
-test('theme persists, system follows device, and unavailable draft storage remains optional',async({page})=>{
+test('light and dark persist, no system option appears, and storage remains optional',async({page})=>{
  await page.addInitScript(()=>{const original=Storage.prototype.setItem;Storage.prototype.setItem=function(key,value){if(key.includes('PrivateRequest'))throw new DOMException('Storage blocked','SecurityError');return original.call(this,key,value);};});
- await start(page);await expect(page.getByRole('switch',{name:'Sound',exact:true})).toHaveAttribute('aria-checked','false');await appearance(page,'Dark');await page.reload();await expect(page.locator('html')).toHaveAttribute('data-theme','dark');await expect(page.locator('meta[name="theme-color"]')).toHaveCount(1);await expect(page.locator('meta[name="theme-color"]')).toHaveAttribute('content',await page.locator('html').evaluate(el=>getComputedStyle(el).getPropertyValue('--surface-page').trim()));await appearance(page,'System');await page.emulateMedia({colorScheme:'light'});await expect(page.locator('html')).toHaveAttribute('data-theme','light');await page.emulateMedia({colorScheme:'dark'});await expect(page.locator('html')).toHaveAttribute('data-theme','dark');
- const begin=page.getByRole('button',{name:'Begin your request'});if(await begin.isVisible())await begin.click();await expect(page.getByText('Draft saving is unavailable in this browser.',{exact:true})).toBeVisible();await choose(page,'Rolex');await expect(page.getByRole('heading',{name:'What are we looking for today?'})).toBeFocused();
+ await start(page);await expect(page.getByRole('switch',{name:'Sound',exact:true})).toHaveAttribute('aria-checked','false');await appearance(page,'Dark');await page.reload();await expect(page.locator('html')).toHaveAttribute('data-theme','dark');await expect(page.locator('meta[name="theme-color"]')).toHaveCount(1);await expect(page.locator('meta[name="theme-color"]')).toHaveAttribute('content',await page.locator('html').evaluate(el=>getComputedStyle(el).getPropertyValue('--surface-page').trim()));await appearance(page,'Light');await expect(page.getByRole('radio',{name:'System appearance'})).toHaveCount(0);await page.emulateMedia({colorScheme:'dark'});await expect(page.locator('html')).toHaveAttribute('data-theme','light');
+ const begin=page.getByRole('button',{name:'Let’s get started'});if(await begin.isVisible())await begin.click();await expect(page.getByText('Draft saving is unavailable in this browser.',{exact:true})).toBeVisible();await choose(page,'Rolex');await expect(page.getByRole('heading',{name:'What are we looking for today?'})).toBeFocused();
 });
 test('saving locks competing edits',async({page})=>{
  let resolve!:()=>void;let sent!:()=>void;const arrived=new Promise<void>(r=>sent=r);const release=new Promise<void>(r=>resolve=r);await page.route('**/api/watch-request',async route=>{sent();await release;await route.fulfill({status:202,json:{status:'accepted',preview:true,requestId:'DEMO-LOCK'}});});
@@ -85,8 +85,8 @@ test('Back cancels queued advancement, keyboard choices stay explorable and cust
 });
 test('sound plays real short buffers only after opt-in and stops when disabled',async({page})=>{
  await page.addInitScript(()=>{const state={starts:0,running:false};Object.assign(window,{__audioEvidence:state});const context=window.AudioContext;const create=context.prototype.createBufferSource;context.prototype.createBufferSource=function(){const source=create.call(this);const start=source.start.bind(source);source.start=(...args:Parameters<AudioBufferSourceNode['start']>)=>{state.starts++;state.running=this.state==='running';start(...args);};return source;};});
- await start(page);const sound=page.getByRole('switch',{name:'Sound',exact:true});await expect(sound).toHaveAttribute('aria-checked','false');await expect(page.getByRole('slider')).toHaveCount(0);await sound.click();await expect(sound).toHaveAttribute('aria-checked','true');expect(await page.evaluate(()=>(window as typeof window & {__audioEvidence:{starts:number;running:boolean}}).__audioEvidence)).toMatchObject({starts:1,running:true});
- await choose(page,'Rolex');const before=await page.evaluate(()=>(window as typeof window & {__audioEvidence:{starts:number}}).__audioEvidence.starts);expect(before).toBeGreaterThan(1);await sound.click();await expect(sound).toHaveAttribute('aria-checked','false');await page.getByLabel('Model',{exact:true}).fill('Daytona');await next(page);expect(await page.evaluate(()=>(window as typeof window & {__audioEvidence:{starts:number}}).__audioEvidence.starts)).toBe(before);
+ await start(page);const sound=page.getByRole('switch',{name:'Sound',exact:true});await expect(sound).toHaveAttribute('aria-checked','false');await expect(page.getByRole('slider')).toHaveCount(0);await sound.click();await expect(sound).toHaveAttribute('aria-checked','true');await expect.poll(()=>page.evaluate(()=>(window as typeof window & {__audioEvidence:{starts:number}}).__audioEvidence.starts)).toBeGreaterThanOrEqual(3);
+ await choose(page,'Rolex');await sound.click();await expect(sound).toHaveAttribute('aria-checked','false');const before=await page.evaluate(()=>(window as typeof window & {__audioEvidence:{starts:number}}).__audioEvidence.starts);await page.waitForTimeout(650);await page.getByLabel('Model',{exact:true}).fill('Daytona');await next(page);expect(await page.evaluate(()=>(window as typeof window & {__audioEvidence:{starts:number}}).__audioEvidence.starts)).toBe(before);
 });
 test('unavailable audio is reported without claiming sound is on',async({page})=>{
  await page.addInitScript(()=>Object.defineProperty(window,'AudioContext',{value:class{constructor(){throw new Error('Audio unavailable in test');}}}));await start(page);const sound=page.getByRole('switch',{name:'Sound',exact:true});await sound.click();await expect(sound).toHaveAttribute('aria-checked','false');await expect(page.getByRole('status')).toContainText('Sound could not start');
@@ -109,14 +109,18 @@ test('all homepage watch images decode successfully',async({page})=>{
  for(const img of await images.all()){await img.scrollIntoViewIfNeeded();await expect.poll(()=>img.evaluate(element=>(element as HTMLImageElement).complete && (element as HTMLImageElement).naturalWidth>0)).toBe(true);await img.evaluate(async element=>{await (element as HTMLImageElement).decode();});expect(await img.evaluate(element=>(element as HTMLImageElement).naturalWidth>0 && (element as HTMLImageElement).naturalHeight>0)).toBe(true);}
 });
 
-test('request starts immediately with a single-row mobile header and no promotional detour',async({page})=>{
+test('focused introduction shows proof points and starts the request with one CTA',async({page})=>{
  await page.setViewportSize({width:390,height:844});await page.goto('/');
- await expect(page.getByRole('button',{name:'Begin your request'})).toHaveCount(0);
+ await expect(page.getByRole('heading',{level:1})).toContainText('Together, let’s find');
+ await expect(page.getByText('$100M+', {exact:true})).toBeVisible();
+ await expect(page.getByText('24H', {exact:true})).toBeVisible();
+ await expect(page.getByRole('radiogroup',{name:'Watch brand'})).toHaveCount(0);
+ await page.getByRole('button',{name:'Let’s get started'}).click();
  await expect(page.getByRole('radiogroup',{name:'Watch brand'})).toBeVisible();
  await expect(page.locator('.concierge-directory')).toHaveCount(0);
  await expect(page.getByRole('button',{name:'Continue →',exact:true})).toBeEnabled();
  await expect(page.locator('.item-tabs')).toHaveCount(0);
- await expect(page.getByRole('heading',{name:'Which brand are we looking for?'})).not.toBeFocused();
+ await expect(page.getByRole('heading',{name:'Which brand are we looking for?'})).toBeFocused();
  const header=await page.locator('.request-topbar').boundingBox();expect(header!.height).toBeLessThan(80);
  const choice=await page.getByRole('radio',{name:'Rolex',exact:true}).boundingBox();expect(choice!.y+choice!.height).toBeLessThan(844);
  await page.setViewportSize({width:320,height:568});expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);

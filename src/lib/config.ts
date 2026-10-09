@@ -5,7 +5,7 @@ export const config = {
     draftKey: 'omniPrivateRequestV4', legacyDraftKey: 'omniPrivateRequestV3',
     audioUrl: '/assets/audio/mechanical-watch-loop.mp3',
     analytics: { host: 'concierge.omnitimepieces.com', id: 'AW-18487089756', destination: 'AW-18487089756/VsDXCMynl40dENy0qu9E' },
-    copy: { hero: 'Together, let’s find your next timepiece.', intro: 'Tell us what you have in mind. Our private desk will review your preferences and discuss the next steps with you.', success: 'Your private request has been received. We’ll send a confirmation to your email and follow up through your preferred method.' },
+    copy: { inventoryValue: '$100M+', inventoryLabel: 'Global inventory access', sourcingTime: '24H', sourcingLabel: 'Most watches located', hero: 'Together, let’s find your next timepiece.', intro: 'Tell us what you have in mind. Our private desk will review your preferences and discuss the next steps with you.', success: 'Your private request has been received. We’ll send a confirmation to your email and follow up through your preferred method.' },
 };
 export const steps = [
     { id: 'brand', label: 'The maison', title: 'Which brand are we looking for?' },

@@ -3,13 +3,14 @@
 import { useEffect, useRef, useState } from 'react';
 import { resolveTheme, themeStorageKey, type ThemePreference } from '@/lib/theme';
 import { ControlIcon } from './control-icons';
-const options = ['light', 'dark', 'system'] as const;
+const options = ['light', 'dark'] as const;
 export function ThemeControl({ compact = false }: { compact?: boolean }) {
-    const [preference, setPreference] = useState<ThemePreference>('system');
+    const [preference, setPreference] = useState<ThemePreference>('light');
     const [ready, setReady] = useState(false);
     const group = useRef<HTMLDivElement>(null);
     useEffect(() => {
         try { const saved = localStorage.getItem(themeStorageKey); if (saved === 'light' || saved === 'dark') setPreference(saved); } catch { }
+        setPreference(resolveTheme(document.documentElement.dataset.theme, matchMedia('(prefers-color-scheme: dark)').matches));
         setReady(true);
     }, []);
     useEffect(() => {
@@ -34,7 +35,7 @@ export function ThemeControl({ compact = false }: { compact?: boolean }) {
         {options.map((value, index) => <button key={value} type="button" role="radio" aria-checked={preference === value} tabIndex={preference === value ? 0 : -1} aria-label={`${value[0].toUpperCase()}${value.slice(1)} appearance`} title={`${value[0].toUpperCase()}${value.slice(1)} appearance`} onClick={() => choose(value)} onKeyDown={event => {
             const delta = event.key === 'ArrowRight' || event.key === 'ArrowDown' ? 1 : event.key === 'ArrowLeft' || event.key === 'ArrowUp' ? -1 : 0;
             if (!delta && event.key !== 'Home' && event.key !== 'End') return;
-            event.preventDefault(); const next = event.key === 'Home' ? 0 : event.key === 'End' ? 2 : (index + delta + options.length) % options.length;
+            event.preventDefault(); const next = event.key === 'Home' ? 0 : event.key === 'End' ? options.length - 1 : (index + delta + options.length) % options.length;
             choose(options[next]); group.current?.querySelectorAll<HTMLButtonElement>('button')[next].focus();
         }}><ControlIcon name={value === 'light' ? 'sun' : value === 'dark' ? 'moon' : 'system'}/></button>)}
     </div>;
