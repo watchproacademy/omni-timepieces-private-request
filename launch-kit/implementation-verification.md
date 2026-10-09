@@ -83,3 +83,24 @@ Verification: type checks, lint, 27 unit/database tests, and optimized build pas
 Hosted verification of the picker preview exposed an asset-packaging bug: `.vercelignore` used an unanchored `assets/` rule, which also excluded `public/assets/`. Local image checks passed but deployed source images returned 404. Anchored the legacy exclusion to `/assets/` and added hosted original/optimized-image verification to the release checklist. The corrected deployment must be checked before this work is considered delivered.
 
 Corrected hosted preview is READY: https://omni-timepieces-private-request-cd6q4zu5p-watch-pro-academy.vercel.app (`dpl_6s3itFNAK5PscqcYSeDiv45DWTo5`, source commit `eade4b7`, picker implementation `dfc3b0c`). All three optimized image requests now return HTTP 200 with `image/jpeg`: dress watch 55,154 bytes, sport watch 78,683 bytes, complication watch/background 66,581 bytes. The original public dress-watch file also returns HTTP 200 with 374,529 image bytes. This confirms the asset-packaging fix on the hosted preview, beyond local browser decoding. Supersedes the intermediate picker preview with missing images. Production was not promoted.
+
+## Mobile loading refinement — 9 October 2026
+
+Preserved the typography, appearance controls, watch mechanism, photos, and layout. Split the global settings/sound provider from the request store, lazy-loaded later funnel sections, disabled speculative route prefetching on navigation/directory links, and reduced decorative image transfer through responsive quality-60 optimization. Added Latin font subsets with complete originals retained as on-demand glyph fallbacks and a reproducible optional asset-build script.
+
+Comparable localhost mobile Lighthouse samples:
+
+| Measurement | Before | After |
+| --- | --- | --- |
+| Performance | 90 | 95 |
+| Accessibility | 100 | 100 |
+| Best practices | 96 | 96 |
+| Largest contentful paint | 3.3s | 2.8s |
+| First contentful paint | 1.5s | 1.4s |
+| Main-thread blocking | 180ms | 110ms |
+| Layout shift | 0 | 0 |
+| Initial transfer | 511 KiB | 417 KiB |
+
+Reports: `mobile-before.json`, `mobile-after.json`. These single lab samples are directional evidence, not field Core Web Vitals or a guarantee on every device. The 2.8s result still exceeds the 2.5s release target; hosted/real-device verification remains open. Mobile screenshots in `screenshots/mobile-performance` preserve both themes without horizontal overflow. The font verification report confirms the smaller faces actually load.
+
+Account recheck: Vercel reports no attached integration resources. GitHub OAuth still has `repo`, `gist`, and `read:org`, with no `workflow` scope. Requested the already identified Neon terms acceptance and GitHub reconnection from the owner. No paid plan was activated. Vercel's current Hobby documentation continues to restrict commercial use (https://vercel.com/docs/plans/hobby); the commercial launch gate is unresolved. Real delivery, quotas, copy/imagery approval, Search Console, and production promotion remain pending as listed above.

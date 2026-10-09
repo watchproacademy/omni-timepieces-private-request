@@ -1,5 +1,6 @@
 'use client';
 import { useEffect, useRef, useState } from 'react';
+import dynamic from 'next/dynamic';
 import { choices, steps } from '@/lib/config';
 import { brandProfiles } from '@/lib/catalog';
 import { watchSchema, tradeSchema, contactSchema, requestSchema, fieldErrors } from '@/lib/validation';
@@ -10,11 +11,12 @@ import { ConfirmationSeal, ConfirmationTicket } from './confirmation';
 import { recordAccepted, track } from '@/lib/analytics';
 import { submitInquiry, SubmissionError } from '@/lib/submission';
 import { clearSession } from '@/lib/storage';
-import { RequestProvider, useConfiguration, useRequest } from './providers';
+import { RequestProvider, useRequest } from './providers';
+import { useConfiguration } from './configuration-provider';
 import { Choices, Field } from './fields';
-import { WatchDetails } from './watch-details';
-import { TradeEditor } from './trade-editor';
-import { RequestReview } from './request-review';
+const WatchDetails = dynamic(() => import('./watch-details').then(module => module.WatchDetails));
+const TradeEditor = dynamic(() => import('./trade-editor').then(module => module.TradeEditor));
+const RequestReview = dynamic(() => import('./request-review').then(module => module.RequestReview));
 function RequestFunnel() {
     const { state, dispatch, ready, draftStatus } = useRequest();
     const config = useConfiguration();

@@ -4,7 +4,7 @@ import Image from 'next/image';
 export function WatchMovement() {
     return (
         <div className="movement" aria-hidden="true">
-            <Image src="/assets/images/complication-watch.jpg" alt="" fill loading="lazy" fetchPriority="low" sizes="100vw" quality={75} />
+            <Image src="/assets/images/complication-watch.jpg" alt="" fill loading="lazy" fetchPriority="low" sizes="100vw" quality={60} />
             <div className="movement-shade" />
             <div className="calibre">
                 <div className="gear gear-one">{Array.from({ length: 8 }, (_, i) => <i key={i} />)}</div>

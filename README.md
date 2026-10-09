@@ -78,3 +78,9 @@ The sun/moon/system appearance switch uses a sliding indicator, keyboard radio c
 Catalog fields use a shared editable combobox rather than browser-native datalists. Opening a picker shows all configured suggestions; typing filters them. The pinned “Other / enter manually” option clears the value and focuses the input. Arrow keys explore, Enter selects, Escape closes, and outside clicks dismiss. Menus are portaled over the form, reposition around the visual viewport, and do not move Continue when closing. Reference suggestions remain model-dependent; trade fields use the same component. Model chips and guidance expose selected states. Watch tabs include the brand and model (or brand plus Guidance).
 
 The description guide clears suggestions whenever the brief is edited. Applying a suggested budget replaces prior numeric bounds, including clearing a stale minimum. The guidance shortcut leaves the model open and explains that the concierge will help select it.
+
+### Mobile delivery
+
+The shared configuration provider is independent of request state, keeping catalog, validation, draft, and submission code out of public-page dependencies. Later funnel sections load as separate chunks. Header, footer, and editorial links do not speculatively prefetch entire routes; normal links and server-rendered public content remain intact.
+
+Latin WOFF2 subsets reduce initial font transfer while the complete licensed fonts remain available for other characters. Regenerate the subsets with `scripts/subset-fonts.py` using the pinned optional font tooling documented in that file. Both font faces keep `font-display: swap`; the hero subset is preloaded. Photography uses the approved Next image quality setting of 60, retaining responsive sizing and lazy loading. Compare mobile lab evidence in `launch-kit/mobile-before.json` and `launch-kit/mobile-after.json`; these are not production field measurements.

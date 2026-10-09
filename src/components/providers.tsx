@@ -1,16 +1,9 @@
 /* eslint-disable react-hooks/set-state-in-effect -- Browser-only draft and theme restoration must run after SSR hydration. */
 'use client';
 import { createContext, useContext, useEffect, useReducer, useState, type ReactNode } from 'react';
-import { config } from '@/lib/config';
 import { initialState, reducer, type Action, type RequestState } from '@/lib/state';
 import { clearSession, prefill, readSession, saveSession } from '@/lib/storage';
 import { initializeAnalytics } from '@/lib/analytics';
-import { SoundProvider } from './sound';
-const ConfigurationContext = createContext(config);
-export function ConfigurationProvider({ children }: {
-    children: ReactNode;
-}) { return <ConfigurationContext.Provider value={config}><SoundProvider>{children}</SoundProvider></ConfigurationContext.Provider>; }
-export const useConfiguration = () => useContext(ConfigurationContext);
 const RequestContext = createContext<{
     state: RequestState;
     dispatch: React.Dispatch<Action>;
