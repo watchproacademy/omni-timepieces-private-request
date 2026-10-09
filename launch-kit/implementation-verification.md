@@ -10,9 +10,9 @@ The application migration is implemented. Production launch remains gated by inf
 - Automated WCAG A/AA checks report no violations on the tested light/dark funnel entry screens. This is not a complete manual accessibility certification.
 - Desktop/mobile screenshots reviewed in both themes, including a 320px reflow check. Screenshots are in `launch-kit/screenshots`.
 - Real PostgreSQL migration semantics tested in isolated PGlite, including concurrent duplicate keys, atomic inquiry/jobs, throttling, leasing, and cascading retention. Provider adapters and worker failure paths use isolated mocks, not real emails.
-- Protected Vercel demo preview is READY: https://omni-timepieces-private-request-kqkob5im7-watch-pro-academy.vercel.app
-- Preview ID: `dpl_HXfmAP2pFqqGmxjxASSyZydkv8z9`. This earlier preview predates the final follow-up fixes; refresh it from the review branch before release.
-- Authenticated preview checks: brand page responds 200 with readable sourcing content, canonical link, breadcrumb markup, and noindex. Robots disallows all. The deployed demo API returns `accepted`, `preview:true`, and stable ID `DEMO-D17865B5FB67` for the controlled test key. No inquiry or email was created.
+- Protected Vercel demo preview is READY: https://omni-timepieces-private-request-c1f2naanr-watch-pro-academy.vercel.app
+- Preview ID: `dpl_6JaFkwujATTZDhDRJXHstdx5mK4B`. Source: local commit `81bcba9` on `codex/launch-readiness`. The GitHub push is awaiting workflow authorization.
+- Authenticated preview checks: brand page responds 200 with readable sourcing content, canonical link, breadcrumb markup, and noindex. Robots disallows all. The deployed demo API returns `accepted`, `preview:true`, and stable ID `DEMO-BCE540BDB94D` for the controlled test key. No inquiry or email was created.
 - Production baseline inspected: `dpl_38T3jVQNXWoLydMCfeCwBSfrA6xi`. Recheck before a future promotion.
 
 Local mobile diagnostic samples are recorded in `mobile-performance.json`. These are optimized localhost Chromium measurements with simulated network/CPU restrictions, not Lighthouse scores, production Core Web Vitals, or field INP evidence. Production performance testing remains a release gate.
@@ -37,7 +37,7 @@ Follow `app-release-checklist.md` for staging a production build without assigni
 - The Vercel team is confirmed active Hobby. The user declined a paid upgrade; the commercial-use launch gate remains open pending a hosting decision.
 - The user approved two Free-plan Neon databases. No resource was created: Marketplace requires the user to accept Neon terms at https://vercel.com/watch-pro-academy/~/integrations/accept-terms/neon?source=cli before provisioning.
 - Production email settings are Sensitive. Local exports contain placeholders; their invalid-key API response does not indicate that the actual production key is invalid. Verify sending inside a configured deployment.
-- GitHub rejects branch protection for this private repository on the current free subscription. CI may still run; release checks must be enforced through the release workflow or an eligible account. Repository privacy was not changed.
+- GitHub initially rejected branch protection for the private repository. The owner made it public; workflow upload still requires additional OAuth permission. CI and required-check configuration remain pending publishing.
 - Mobile Lighthouse baseline: performance 85, accessibility 100, best practices 96; LCP 3.9s, CLS 0.002. The baseline identified a blocking theme request; the nonce-protected inline replacement was re-audited in the final results below.
 
 ### Final local follow-up
@@ -45,3 +45,5 @@ Follow `app-release-checklist.md` for staging a production build without assigni
 Fonts were compressed to licensed WOFF2 (62% smaller), decorative imagery was assigned lazy/low priority, typography sizes were centralized, enhanced-conversion collection was explicitly disabled, and saving now disables competing form edits. A Firefox accessibility failure identified transient theme contrast during background fading; that fade was removed.
 
 Isolated mobile Lighthouse results: funnel performance 93 / accessibility 100 / best practices 96, LCP 3.1s, CLS 0, TBT 70ms; representative brand page performance 97 / accessibility 100 / best practices 100, LCP 2.5s, CLS 0, TBT 90ms. The funnel LCP target still needs production verification/improvement; these local measurements are not field results. Reports are stored beside this document.
+
+Final hosted demo checks pass: HTTP 200 initial Rolex guide HTML, clean canonical, breadcrumbs, noindex, nonce-protected theme bootstrap, WOFF2 fonts, disallow-all preview robots, and explicitly marked demo acceptance. No live inquiry or email was created.
