@@ -57,3 +57,15 @@ Verified type checks, lint, 25 unit/database tests, optimized build and a clean 
 Mobile localhost Lighthouse on the revised services page: performance 92, accessibility 100, best practices 100; LCP 3.2s, CLS 0, TBT 60ms. These are lab measurements; production performance remains an open release gate.
 
 Refined protected demo preview is READY: https://omni-timepieces-private-request-9m3tj96u2-watch-pro-academy.vercel.app (`dpl_BYX6a5bAkiUpdKvkbMbQLarbQE8a`, application commit `fc293dc`). Existing production and account/infrastructure gates are unchanged.
+
+## Designer feedback and interaction refinement
+
+Replaced the plain homepage service/brand/FAQ link row with three image-led editorial panels and retained the animated mechanical watch background. Both themes now use warmer shared tokens. The original Newsreader/DM Sans typefaces remain. Header controls are an animated sun/moon/system radio switch and a single quiet sound on/off switch; no volume slider is present. Sound uses short synthesized selection ticks after explicit opt-in, suspends when hidden, and reports playback failures without claiming it is on.
+
+Simple choices advance automatically after a 280ms cue. Custom entries, model details, trade details, and incomplete contact information wait for completion. Back cancels pending advancement; arrow keys explore options without navigation and Enter confirms. Added segmented progress, a sticky mobile action bar, truthful draft-save status, inline field feedback, direct Review edit returns, and a copyable confirmation ID. A changed brand still requires its model before returning to Review.
+
+Verification: type checks, lint, 27 unit/PostgreSQL tests, and the optimized build pass. The complete 52-test suite passed across Chromium, Firefox, WebKit, and mobile WebKit (2.4 minutes). After a final browser toolbar-color correction, all 12 affected theme, reflow, accessibility, and public-page checks passed again. Earlier checks caught invalid definition-list edit-button placement and transient text contrast during a fade; both were fixed. Tests also verify actual running Web Audio buffers, disabled sound, audio failure, cancelled advancement, storage denial, custom brands/budgets, and changing a brand from Review.
+
+Final desktop/mobile screenshots in `screenshots/ux-enhancement` were inspected in both themes. `ux-visual-checks.json` records no script errors or horizontal overflow, animated gears that move normally and stop under reduced motion, and matching browser toolbar colors. All new component colors reference shared semantic roles.
+
+Mobile localhost Lighthouse: performance 89, accessibility 100, best practices 96; LCP 3.7s, TBT 100ms, CLS 0. Report: `lighthouse-mobile-ux.json`. This lab result does not meet the designer's under-two-second LCP aspiration; mobile performance and real-device/VoiceOver checks remain release work. The photographs are existing generated prototype artwork and still require the release approval described above. Real database/email delivery, account eligibility, and production launch gates are unchanged.

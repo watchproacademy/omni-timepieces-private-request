@@ -1,4 +1,5 @@
 import { config, steps } from './config';
+import { canAutoAdvance } from './flow';
 import type { Watch, Trade, Contact, Inquiry } from './validation';
 export type EditableWatch = Omit<Watch, 'occasion' | 'condition' | 'timeline' | 'budget'> & {
     occasion: Watch['occasion'] | '';
@@ -16,6 +17,7 @@ export type RequestState = {
     activeWatchId: string;
     activeTradeId: string;
     step: number;
+    reviewReturn: boolean;
     tradeIn: 'Yes' | 'No' | '';
     contact: Omit<Contact, 'preferredContact'> & {
         preferredContact: Contact['preferredContact'] | '';
@@ -34,9 +36,9 @@ export type RequestState = {
 export const blankWatch = (id: string): EditableWatch => ({ id, brand: '', model: '', reference: '', year: '', dial: '', caseMaterial: '', bracelet: '', caseMaterialOther: '', braceletOther: '', occasion: '', condition: '', timeline: '', budget: '' });
 export const blankTrade = (id: string): EditableTrade => ({ id, brand: '', model: '', reference: '', year: '', dial: '', bracelet: '', condition: '', set: '', setOther: '', currency: config.currency });
 export function initialState(): RequestState {
-    return { watches: [blankWatch('initial-watch')], trades: [], activeWatchId: 'initial-watch', activeTradeId: '', step: 0, tradeIn: '', contact: { fullName: '', email: '', phone: '', location: '', preferredContact: '' }, consent: false, conditionNotes: '', inspirationUrl: '', attribution: { utm_source: '', utm_medium: '', utm_campaign: '', utm_content: '', utm_term: '', landingPage: config.siteUrl + '/' }, submissionKey: '', status: 'idle' };
+    return { watches: [blankWatch('initial-watch')], trades: [], activeWatchId: 'initial-watch', activeTradeId: '', step: 0, reviewReturn: false, tradeIn: '', contact: { fullName: '', email: '', phone: '', location: '', preferredContact: '' }, consent: false, conditionNotes: '', inspirationUrl: '', attribution: { utm_source: '', utm_medium: '', utm_campaign: '', utm_content: '', utm_term: '', landingPage: config.siteUrl + '/' }, submissionKey: '', status: 'idle' };
 }
-export type Action = {
+export type Action = { type: 'advance'; fromStep: number; watchId: string } | { type: 'review/edit'; step: number; watchId?: string } | { type: 'review/return' } | {
     type: 'restore';
     state: RequestState;
 } | {
@@ -88,8 +90,11 @@ export type Action = {
 };
 export function reducer(state: RequestState, action: Action): RequestState {
     switch (action.type) {
+        case 'advance': return state.step === action.fromStep && state.activeWatchId === action.watchId && canAutoAdvance(state) ? { ...state, step: state.reviewReturn && state.step !== 0 ? steps.length - 1 : Math.min(steps.length - 1, state.step + 1), reviewReturn: state.reviewReturn && state.step === 0 } : state;
+        case 'review/edit': return { ...state, step: Math.max(0, Math.min(steps.length - 2, action.step)), activeWatchId: action.watchId && state.watches.some(w => w.id === action.watchId) ? action.watchId : state.activeWatchId, reviewReturn: true };
+        case 'review/return': return { ...state, step: steps.length - 1, reviewReturn: false };
         case 'restore': return action.state;
-        case 'watch/add': return state.watches.length >= config.maxWatches ? state : { ...state, watches: [...state.watches, blankWatch(action.id)], activeWatchId: action.id, submissionKey: '', step: 0 };
+        case 'watch/add': return state.watches.length >= config.maxWatches ? state : { ...state, watches: [...state.watches, blankWatch(action.id)], activeWatchId: action.id, submissionKey: '', step: 0, reviewReturn: false };
         case 'watch/switch': return state.watches.some(w => w.id === action.id) ? { ...state, activeWatchId: action.id } : state;
         case 'watch/update': return { ...state, submissionKey: '', watches: state.watches.map(w => {
                 if (w.id !== action.id)

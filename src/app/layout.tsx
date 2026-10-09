@@ -9,6 +9,7 @@ import '@/styles/theme.css';
 import '@/styles/app.css';
 import '@/styles/atmosphere.css';
 import '@/styles/editorial.css';
+import '@/styles/interactions.css';
 export const metadata: Metadata = { metadataBase: new URL(config.siteUrl), title: { default: `${config.name} — Private request`, template: `%s | ${config.name}` }, icons: { icon: '/favicon.svg' } };
 export default async function RootLayout({ children }: {
     children: React.ReactNode;

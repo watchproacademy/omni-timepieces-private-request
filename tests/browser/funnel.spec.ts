@@ -1,156 +1,93 @@
 import { test, expect, type Page } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
-async function start(page: Page, url = '/') { await page.goto(url); const begin = page.getByRole('button', { name: 'Begin your request' }); if (await begin.isVisible())
-    await begin.click(); await expect(page.getByRole('button', { name: 'Continue →', exact: true })).toBeEnabled(); }
-async function next(page: Page) { await page.getByRole('button', { name: 'Continue →', exact: true }).click(); }
-async function watch(page: Page, brand = 'Rolex', model = 'Daytona') {
-    await page.getByRole('button', { name: brand, exact: true }).click();
-    await next(page);
-    await page.getByLabel('Model', { exact: true }).fill(model);
-    await next(page);
-    await page.getByRole('button', { name: 'For myself', exact: true }).click();
-    await next(page);
-    await page.getByRole('button', { name: 'Pre-owned', exact: true }).click();
-    await next(page);
-    await page.getByRole('button', { name: 'No fixed timeline', exact: true }).click();
-    await next(page);
-    await page.getByRole('button', { name: 'Flexible', exact: true }).click();
+async function start(page: Page, url = '/') {
+ await page.goto(url);const begin=page.getByRole('button',{name:'Begin your request'});if(await begin.isVisible())await begin.click();
+ await expect(page.getByRole('button',{name:'Continue →',exact:true})).toBeEnabled();
 }
-async function contact(page: Page) { await page.getByLabel('Full name', { exact: true }).fill('Test Client'); await page.getByLabel('Email', { exact: true }).fill('test@example.com'); await page.getByLabel('City / country', { exact: true }).fill('Miami, USA'); await page.getByRole('button', { name: 'Email', exact: true }).click(); await next(page); }
-test('all nine steps, required email and consent, and accepted demo receipt', async ({ page }) => {
-    const errors: string[] = [];
-    page.on('pageerror', e => errors.push(e.message));
-    await start(page);
-    await watch(page);
-    await next(page);
-    await page.getByRole('button', { name: 'No', exact: true }).click();
-    await next(page);
-    await next(page);
-    await expect(page.getByRole('region', { name: 'Private watch request' }).getByRole('alert')).toContainText('contact');
-    await contact(page);
-    await page.getByRole('button', { name: 'Send private request' }).click();
-    await expect(page.getByRole('region', { name: 'Private watch request' }).getByRole('alert')).toBeVisible();
-    await page.getByRole('checkbox').check();
-    await page.getByRole('button', { name: 'Send private request' }).click();
-    await expect(page.getByText('Demo complete. No request or email was sent.')).toBeVisible();
-    expect(errors).toEqual([]);
+async function next(page: Page) { await page.getByRole('button',{name:/^(Continue →|Save and return to review)$/}).click(); }
+async function choose(page: Page, name: string, automatic = true) {
+ const heading=page.locator('.step-content > h2');const before=await heading.textContent();
+ await page.getByRole('radio',{name,exact:true}).click();
+ if(automatic) await expect(heading).not.toHaveText(before!);
+}
+async function appearance(page: Page, name: 'Light'|'Dark'|'System') { await page.getByRole('radio',{name:`${name} appearance`,exact:true}).click(); }
+async function watch(page: Page, brand='Rolex',model='Daytona') {
+ await choose(page,brand);await page.getByLabel('Model',{exact:true}).fill(model);await next(page);
+ await choose(page,'For myself');await choose(page,'Pre-owned');await choose(page,'No fixed timeline');await choose(page,'Flexible');
+ await expect(page.getByRole('heading',{name:'Would you like to trade a watch?'})).toBeVisible();
+}
+async function contact(page: Page) {
+ await page.getByLabel('Full name',{exact:true}).fill('Test Client');await page.getByRole('textbox',{name:'Email',exact:true}).fill('test@example.com');await page.getByLabel('City / country',{exact:true}).fill('Miami, USA');await choose(page,'Email');
+}
+async function readyForReview(page: Page) { await start(page);await watch(page);await choose(page,'No');await contact(page); }
+test('all nine steps auto advance where complete; email and consent remain required',async({page})=>{
+ const errors:string[]=[];page.on('pageerror',e=>errors.push(e.message));
+ await start(page);await watch(page);await choose(page,'No');await next(page);
+ await expect(page.getByRole('region',{name:'Private watch request'}).getByRole('alert')).toContainText('contact');
+ await contact(page);await page.getByRole('button',{name:'Send private request'}).click();
+ await expect(page.getByRole('region',{name:'Private watch request'}).getByRole('alert')).toBeVisible();
+ await page.getByRole('checkbox').check();await page.getByRole('button',{name:'Send private request'}).click();
+ await expect(page.getByText('Demo complete. No request or email was sent.')).toBeVisible();
+ await expect(page.getByRole('heading',{name:'Your concierge will take it from here.'})).toBeFocused();
+ await expect(page.getByRole('button',{name:'Copy request ID'})).toBeVisible();expect(errors).toEqual([]);
 });
-test('prefill, changing model resets reference, draft restores and review edits agree', async ({ page }) => {
-    await start(page, '/?brand=Rolex&model=Daytona&reference=126500LN&utm_source=test');
-    await next(page);
-    await expect(page.getByLabel('Model', { exact: true })).toHaveValue('Daytona');
-    await expect(page.getByRole('combobox', { name: 'Reference', exact: true })).toHaveValue('126500LN');
-    await page.getByLabel('Model', { exact: true }).fill('Datejust');
-    await expect(page.getByRole('combobox', { name: 'Reference', exact: true })).toHaveValue('');
-    await page.waitForTimeout(250);
-    await page.evaluate(() => history.replaceState(null, '', '/'));
-    await page.reload();
-    const begin = page.getByRole('button', { name: 'Begin your request' });
-    if (await begin.isVisible())
-        await begin.click();
-    await expect(page.getByLabel('Model', { exact: true })).toHaveValue('Datejust');
+test('prefill, dependent model resets, and draft restoration preserve the active watch',async({page})=>{
+ await start(page,'/?brand=Rolex&model=Daytona&reference=126500LN&utm_source=test');await next(page);
+ await expect(page.getByLabel('Model',{exact:true})).toHaveValue('Daytona');await expect(page.getByRole('combobox',{name:'Reference',exact:true})).toHaveValue('126500LN');
+ await page.getByLabel('Model',{exact:true}).fill('Datejust');await expect(page.getByRole('combobox',{name:'Reference',exact:true})).toHaveValue('');await page.waitForTimeout(250);
+ await page.evaluate(()=>history.replaceState(null,'','/'));await page.reload();const begin=page.getByRole('button',{name:'Begin your request'});if(await begin.isVisible())await begin.click();await expect(page.getByLabel('Model',{exact:true})).toHaveValue('Datejust');
 });
-test('multiple watches and trades retain independent details', async ({ page }) => {
-    await start(page);
-    await watch(page);
-    await page.getByRole('button', { name: 'Add another requested watch' }).click();
-    await watch(page, 'Rolex', 'Datejust');
-    await next(page);
-    await page.getByRole('button', { name: 'Yes', exact: true }).click();
-    await page.getByLabel('Trade brand', { exact: true }).fill('Rolex');
-    await page.getByLabel('Trade model', { exact: true }).fill('Submariner');
-    await page.getByLabel('Trade condition', { exact: true }).selectOption('Good');
-    await page.getByLabel('Trade presentation', { exact: true }).selectOption('Watch only');
-    await page.getByRole('button', { name: 'Add another trade-in' }).click();
-    await page.getByLabel('Trade brand', { exact: true }).fill('Omega');
-    await page.getByLabel('Trade model', { exact: true }).fill('Speedmaster');
-    await page.getByLabel('Trade condition', { exact: true }).selectOption('Excellent');
-    await page.getByLabel('Trade presentation', { exact: true }).selectOption('Watch only');
-    await next(page);
-    await contact(page);
-    await expect(page.getByRole('heading', { name: 'Watch 1 · Rolex Daytona' })).toBeVisible();
-    await expect(page.getByRole('heading', { name: 'Watch 2 · Rolex Datejust' })).toBeVisible();
-    await expect(page.getByText('1. Rolex Submariner', { exact: false })).toBeVisible();
-    await page.getByRole('button', { name: 'Edit watch 1', exact: true }).click();
-    await expect(page.getByLabel('Model', { exact: true })).toHaveValue('Daytona');
-    await page.getByRole('button', { name: 'Remove watch 2' }).click();
-    await expect(page.getByRole('button', { name: 'Remove watch 2' })).toHaveCount(0);
+test('multiple watches and trades retain details and review edits return directly',async({page})=>{
+ await start(page);await watch(page);await page.getByRole('button',{name:'Add another requested watch'}).click();await watch(page,'Rolex','Datejust');await choose(page,'Yes',false);
+ await page.getByLabel('Trade brand',{exact:true}).fill('Rolex');await page.getByLabel('Trade model',{exact:true}).fill('Submariner');await page.getByLabel('Trade condition',{exact:true}).selectOption('Good');await page.getByLabel('Trade presentation',{exact:true}).selectOption('Watch only');
+ await page.getByRole('button',{name:'Add another trade-in'}).click();await page.getByLabel('Trade brand',{exact:true}).fill('Omega');await page.getByLabel('Trade model',{exact:true}).fill('Speedmaster');await page.getByLabel('Trade condition',{exact:true}).selectOption('Excellent');await page.getByLabel('Trade presentation',{exact:true}).selectOption('Watch only');await next(page);await contact(page);
+ await expect(page.getByRole('heading',{name:'Watch 1 · Rolex Daytona'})).toBeVisible();await expect(page.getByRole('heading',{name:'Watch 2 · Rolex Datejust'})).toBeVisible();await expect(page.getByText('1. Rolex Submariner',{exact:false})).toBeVisible();
+ await page.getByRole('button',{name:'Edit timing for watch 1'}).click();await choose(page,'Within 2 weeks');await expect(page.getByRole('heading',{name:'Does everything look right?'})).toBeVisible();
+ await page.getByRole('button',{name:'Edit watch 1',exact:true}).click();await expect(page.getByLabel('Model',{exact:true})).toHaveValue('Daytona');await page.getByRole('button',{name:'Remove watch 2'}).click();await expect(page.getByRole('button',{name:'Remove watch 2'})).toHaveCount(0);await page.getByRole('button',{name:'← Back',exact:true}).click();await choose(page,'Other',false);await page.getByLabel('Brand name',{exact:true}).fill('Independent atelier');await next(page);await expect(page.getByRole('heading',{name:'What are we looking for today?'})).toBeVisible();await page.getByLabel('Model or collection',{exact:true}).fill('Rare reference');await next(page);await expect(page.getByRole('heading',{name:'Does everything look right?'})).toBeVisible();
 });
-test('guidance dialog traps focus, applies reviewed details, and closes with Escape', async ({ page }) => {
-    await start(page);
-    await page.getByRole('button', { name: 'Rolex', exact: true }).click();
-    await next(page);
-    await page.getByRole('button', { name: 'Describe it to your guide' }).click();
-    await page.getByLabel('Your description', { exact: true }).fill('A blue Rolex GMT-Master II on Jubilee under $30k');
-    await page.getByRole('button', { name: 'Review suggestions' }).click();
-    await page.getByRole('button', { name: 'Use these details' }).click();
-    await expect(page.getByLabel('Model', { exact: true })).toHaveValue('GMT-Master II');
-    await page.getByRole('button', { name: 'Describe it to your guide' }).click();
-    await page.keyboard.press('Escape');
-    await expect(page.getByRole('dialog')).not.toBeVisible();
+test('guidance dialog applies reviewed details and Escape closes it',async({page})=>{
+ await start(page);await choose(page,'Rolex');await page.getByRole('button',{name:'Describe it to your guide'}).click();await page.getByLabel('Your description',{exact:true}).fill('A blue Rolex GMT-Master II on Jubilee under $30k');await page.getByRole('button',{name:'Review suggestions'}).click();await page.getByRole('button',{name:'Use these details'}).click();await expect(page.getByLabel('Model',{exact:true})).toHaveValue('GMT-Master II');await page.getByRole('button',{name:'Describe it to your guide'}).click();await page.keyboard.press('Escape');await expect(page.getByRole('dialog')).not.toBeVisible();await expect(page.getByRole('heading',{name:'What are we looking for today?'})).toBeVisible();
 });
-test('failed submissions keep draft and retry with the same idempotency key', async ({ page }) => {
-    const keys: string[] = [];
-    await page.route('**/api/watch-request', async (route) => { keys.push(route.request().headers()['idempotency-key']); await route.fulfill({ status: keys.length === 1 ? 503 : 202, json: keys.length === 1 ? { message: 'Please retry.' } : { status: 'accepted', preview: true, requestId: 'DEMO-TEST' } }); });
-    await start(page);
-    await watch(page);
-    await next(page);
-    await page.getByRole('button', { name: 'No', exact: true }).click();
-    await next(page);
-    await contact(page);
-    await page.getByRole('checkbox').check();
-    await page.getByRole('button', { name: 'Send private request' }).click();
-    await expect(page.getByRole('region', { name: 'Private watch request' }).getByRole('alert')).toContainText('Please retry');
-    await page.getByRole('button', { name: 'Send private request' }).click();
-    await expect(page.getByText('DEMO-TEST')).toBeVisible();
-    expect(keys[0]).toBe(keys[1]);
+test('failed submissions retain the draft and retry with one idempotency key',async({page})=>{
+ const keys:string[]=[];await page.route('**/api/watch-request',async route=>{keys.push(route.request().headers()['idempotency-key']);await route.fulfill({status:keys.length===1?503:202,json:keys.length===1?{message:'Please retry.'}:{status:'accepted',preview:true,requestId:'DEMO-TEST'}});});
+ await readyForReview(page);await page.getByRole('checkbox').check();await page.getByRole('button',{name:'Send private request'}).click();await expect(page.getByRole('region',{name:'Private watch request'}).getByRole('alert')).toContainText('Please retry');await page.getByRole('button',{name:'Send private request'}).click();await expect(page.getByText('DEMO-TEST',{exact:true})).toBeVisible();expect(keys[0]).toBe(keys[1]);
 });
-test('themes, zoom-friendly layout, and accessible funnel controls', async ({ page }) => {
-    await start(page);
-    for (const theme of ['light', 'dark']) {
-        await page.getByLabel('Appearance', { exact: true }).selectOption(theme);
-        await expect(page.locator('html')).toHaveAttribute('data-theme', theme);
-        const result = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa', 'wcag21aa']).analyze();
-        expect(result.violations).toEqual([]);
-    }
-    await page.setViewportSize({ width: 320, height: 500 });
-    const begin = page.getByRole('button', { name: 'Begin your request' });
-    if (await begin.isVisible())
-        await begin.click();
-    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
-    await page.getByRole('button', { name: 'Continue →' }).scrollIntoViewIfNeeded();
-    await expect(page.getByRole('button', { name: 'Continue →' })).toBeVisible();
+test('both themes, narrow reflow and accessible controls',async({page})=>{
+ await start(page);for(const theme of ['Light','Dark'] as const){await appearance(page,theme);await expect(page.locator('html')).toHaveAttribute('data-theme',theme.toLowerCase());expect((await new AxeBuilder({page}).withTags(['wcag2a','wcag2aa','wcag21aa']).analyze()).violations).toEqual([]);}
+ await page.setViewportSize({width:320,height:500});const begin=page.getByRole('button',{name:'Begin your request'});if(await begin.isVisible())await begin.click();expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);await page.getByRole('button',{name:'Continue →'}).scrollIntoViewIfNeeded();await expect(page.getByRole('button',{name:'Continue →'})).toBeVisible();
 });
-test('public pages render readable initial HTML, metadata, crawler files, and redirects', async ({ request, page }) => {
-    const response = await request.get('/brands/rolex');
-    const html = await response.text();
-    expect(html).toContain('Shape the configuration');
-    expect(html).toContain('rel="canonical"');
-    expect(html).toContain('BreadcrumbList');
-    expect(html).toContain('noindex');
-    await page.goto('/services');
-    await expect(page.getByRole('heading', { level: 1 })).toHaveText('Private watch sourcing');
-    const redirect=await request.get('/index.html?brand=Rolex', {maxRedirects:0});
-    expect(redirect.status()).toBe(308);
-    expect(redirect.headers().location).toContain('?brand=Rolex');
-    expect(await (await request.get('/llms.txt')).text()).toContain('Catalog entries are examples');
-    expect(await (await request.get('/robots.txt')).text()).toContain('Disallow: /');
+test('public content, metadata, redirects and the visual directory remain crawlable',async({request,page})=>{
+ const html=await(await request.get('/brands/rolex')).text();expect(html).toContain('Shape the configuration');expect(html).toContain('rel="canonical"');expect(html).toContain('BreadcrumbList');expect(html).toContain('noindex');
+ await page.goto('/');await page.getByRole('link',{name:/Discover our service/}).click();await expect(page.getByRole('heading',{level:1})).toHaveText('Private watch sourcing');
+ const redirect=await request.get('/index.html?brand=Rolex',{maxRedirects:0});expect(redirect.status()).toBe(308);expect(redirect.headers().location).toContain('?brand=Rolex');expect(await(await request.get('/llms.txt')).text()).toContain('Catalog entries are examples');expect(await(await request.get('/robots.txt')).text()).toContain('Disallow: /');
 });
-test('rare brands, guidance, custom trade details and phone follow-up validate before acceptance',async({page})=>{
- await start(page);await page.getByRole('button',{name:'Other',exact:true}).click();await page.getByLabel('Brand name',{exact:true}).fill('Independent atelier');await next(page);await page.getByRole('button',{name:'I’d like your guidance',exact:true}).click();await next(page);
- await page.getByRole('button',{name:'For myself',exact:true}).click();await next(page);await page.getByRole('button',{name:'Open to either',exact:true}).click();await next(page);await page.getByRole('button',{name:'No fixed timeline',exact:true}).click();await next(page);await page.getByRole('button',{name:'Flexible',exact:true}).click();await next(page);
- await page.getByRole('button',{name:'Yes',exact:true}).click();await page.getByLabel('Trade brand',{exact:true}).fill('Omega');await page.getByLabel('Trade model',{exact:true}).fill('Speedmaster');await page.getByLabel('Trade condition',{exact:true}).selectOption('Good');await page.getByLabel('Trade presentation',{exact:true}).selectOption('Other / not sure');await next(page);await expect(page.getByRole('region',{name:'Private watch request'}).getByRole('alert')).toContainText('included');await page.getByLabel('What is included?',{exact:true}).fill('Box only');await next(page);
- await page.getByLabel('Full name',{exact:true}).fill('Test Client');await page.getByLabel('Email',{exact:true}).fill('test@example.com');await page.getByLabel('City / country',{exact:true}).fill('Miami');await page.getByRole('button',{name:'WhatsApp',exact:true}).click();await next(page);await expect(page.getByRole('textbox',{name:'Phone',exact:true})).toHaveAttribute('aria-invalid','true');await page.getByRole('textbox',{name:'Phone',exact:true}).fill('+1 202 555 0100');await next(page);
- for(const theme of ['light','dark']){await page.getByLabel('Appearance',{exact:true}).selectOption(theme);expect((await new AxeBuilder({page}).withTags(['wcag2a','wcag2aa','wcag21aa']).analyze()).violations).toEqual([]);}
- await page.getByRole('checkbox').check();await page.getByRole('button',{name:'Send private request'}).click();await expect(page.getByRole('heading',{name:'Your concierge will take it from here.'})).toBeFocused();await expect(page.getByText('Demo complete. No request or email was sent.')).toBeVisible();
+test('rare brands, custom trade descriptions and phone follow-up stay open until complete',async({page})=>{
+ await start(page);await choose(page,'Other',false);await page.getByLabel('Brand name',{exact:true}).fill('Independent atelier');await next(page);await page.getByRole('button',{name:'I’d like your guidance',exact:true}).click();await next(page);await choose(page,'For myself');await choose(page,'Open to either');await choose(page,'No fixed timeline');await choose(page,'Flexible');await choose(page,'Yes',false);
+ await page.getByLabel('Trade brand',{exact:true}).fill('Omega');await page.getByLabel('Trade model',{exact:true}).fill('Speedmaster');await page.getByLabel('Trade condition',{exact:true}).selectOption('Good');await page.getByLabel('Trade presentation',{exact:true}).selectOption('Other / not sure');await next(page);await expect(page.getByRole('region',{name:'Private watch request'}).getByRole('alert')).toContainText('included');await page.getByLabel('What is included?',{exact:true}).fill('Box only');await next(page);
+ await page.getByLabel('Full name',{exact:true}).fill('Test Client');await page.getByRole('textbox',{name:'Email',exact:true}).fill('test@example.com');await page.getByLabel('City / country',{exact:true}).fill('Miami');await choose(page,'WhatsApp',false);await next(page);await expect(page.getByRole('textbox',{name:'Phone',exact:true})).toHaveAttribute('aria-invalid','true');await page.getByRole('textbox',{name:'Phone',exact:true}).fill('+1 202 555 0100');await next(page);
+ for(const theme of ['Light','Dark'] as const){await appearance(page,theme);expect((await new AxeBuilder({page}).withTags(['wcag2a','wcag2aa','wcag21aa']).analyze()).violations).toEqual([]);}
+ await page.getByRole('checkbox').check();await page.getByRole('button',{name:'Send private request'}).click();await expect(page.getByText('Demo complete. No request or email was sent.')).toBeVisible();
 });
-test('theme persists without script errors, blocked storage is optional and audio stays opt-in',async({page})=>{
+test('theme persists, system follows device, and unavailable draft storage remains optional',async({page})=>{
  await page.addInitScript(()=>{const original=Storage.prototype.setItem;Storage.prototype.setItem=function(key,value){if(key.includes('PrivateRequest'))throw new DOMException('Storage blocked','SecurityError');return original.call(this,key,value);};});
- await start(page);await expect(page.getByRole('button',{name:'Sound off'})).toBeVisible();await page.getByLabel('Appearance',{exact:true}).selectOption('dark');await page.reload();await expect(page.locator('html')).toHaveAttribute('data-theme','dark');const begin=page.getByRole('button',{name:'Begin your request'});if(await begin.isVisible())await begin.click();await page.getByRole('button',{name:'Rolex',exact:true}).click();await next(page);await expect(page.getByRole('heading',{name:'What are we looking for today?'})).toBeFocused();
+ await start(page);await expect(page.getByRole('switch',{name:'Sound',exact:true})).toHaveAttribute('aria-checked','false');await appearance(page,'Dark');await page.reload();await expect(page.locator('html')).toHaveAttribute('data-theme','dark');await expect(page.locator('meta[name="theme-color"]')).toHaveCount(1);await expect(page.locator('meta[name="theme-color"]')).toHaveAttribute('content',await page.locator('html').evaluate(el=>getComputedStyle(el).getPropertyValue('--surface-page').trim()));await appearance(page,'System');await page.emulateMedia({colorScheme:'light'});await expect(page.locator('html')).toHaveAttribute('data-theme','light');await page.emulateMedia({colorScheme:'dark'});await expect(page.locator('html')).toHaveAttribute('data-theme','dark');
+ const begin=page.getByRole('button',{name:'Begin your request'});if(await begin.isVisible())await begin.click();await expect(page.getByText('Draft saving is unavailable in this browser.',{exact:true})).toBeVisible();await choose(page,'Rolex');await expect(page.getByRole('heading',{name:'What are we looking for today?'})).toBeFocused();
 });
-test('saving locks the submitted brief and prevents competing edits',async({page})=>{
- let resolve!:()=>void;let sent!:()=>void;const arrived=new Promise<void>(r=>sent=r);const release=new Promise<void>(r=>resolve=r);
- await page.route('**/api/watch-request',async route=>{sent();await release;await route.fulfill({status:202,json:{status:'accepted',preview:true,requestId:'DEMO-LOCK'}});});
- await start(page);await watch(page);await next(page);await page.getByRole('button',{name:'No',exact:true}).click();await next(page);await contact(page);await page.getByRole('checkbox').check();await page.getByRole('button',{name:'Send private request'}).click();await arrived;
- await expect(page.getByRole('button',{name:'Edit watch 1',exact:true})).toBeDisabled();await expect(page.getByRole('button',{name:'Edit contact details',exact:true})).toBeDisabled();await expect(page.getByRole('checkbox')).toBeDisabled();resolve();await expect(page.getByText('DEMO-LOCK')).toBeVisible();
+test('saving locks competing edits',async({page})=>{
+ let resolve!:()=>void;let sent!:()=>void;const arrived=new Promise<void>(r=>sent=r);const release=new Promise<void>(r=>resolve=r);await page.route('**/api/watch-request',async route=>{sent();await release;await route.fulfill({status:202,json:{status:'accepted',preview:true,requestId:'DEMO-LOCK'}});});
+ await readyForReview(page);await page.getByRole('checkbox').check();await page.getByRole('button',{name:'Send private request'}).click();await arrived;await expect(page.getByRole('button',{name:'Edit watch 1',exact:true})).toBeDisabled();await expect(page.getByRole('button',{name:'Edit contact details',exact:true})).toBeDisabled();await expect(page.getByRole('checkbox')).toBeDisabled();resolve();await expect(page.getByText('DEMO-LOCK',{exact:true})).toBeVisible();
+});
+test('Back cancels queued advancement, keyboard choices stay explorable and custom budget waits',async({page})=>{
+ await start(page);await choose(page,'Rolex');await page.getByLabel('Model',{exact:true}).fill('Daytona');await next(page);await choose(page,'For myself');
+ await page.evaluate(()=>{document.querySelector<HTMLButtonElement>('[role=radio][aria-label="Pre-owned"]')!.click();Array.from(document.querySelectorAll<HTMLButtonElement>('.form-nav button')).find(b=>b.textContent?.includes('Back'))!.click();});
+ await page.waitForTimeout(400);await expect(page.getByRole('heading',{name:'Is it for something special?'})).toBeVisible();await choose(page,'For myself');await choose(page,'Pre-owned');await choose(page,'No fixed timeline');await choose(page,'Custom',false);await page.waitForTimeout(400);await expect(page.getByLabel('Up to (USD)',{exact:true})).toBeVisible();await page.getByLabel('Up to (USD)',{exact:true}).fill('25000');await next(page);await page.getByRole('button',{name:'← Back',exact:true}).click();
+ await page.getByRole('radio',{name:'Custom',exact:true}).focus();await page.keyboard.press('ArrowLeft');await page.waitForTimeout(400);await expect(page.getByRole('radio',{name:'Flexible',exact:true})).toHaveAttribute('aria-checked','true');await expect(page.getByRole('heading',{name:'What range feels comfortable?'})).toBeVisible();await page.keyboard.press('Enter');await expect(page.getByRole('heading',{name:'Would you like to trade a watch?'})).toBeVisible();
+});
+test('sound plays real short buffers only after opt-in and stops when disabled',async({page})=>{
+ await page.addInitScript(()=>{const state={starts:0,running:false};Object.assign(window,{__audioEvidence:state});const context=window.AudioContext;const create=context.prototype.createBufferSource;context.prototype.createBufferSource=function(){const source=create.call(this);const start=source.start.bind(source);source.start=(...args:Parameters<AudioBufferSourceNode['start']>)=>{state.starts++;state.running=this.state==='running';start(...args);};return source;};});
+ await start(page);const sound=page.getByRole('switch',{name:'Sound',exact:true});await expect(sound).toHaveAttribute('aria-checked','false');await expect(page.getByRole('slider')).toHaveCount(0);await sound.click();await expect(sound).toHaveAttribute('aria-checked','true');expect(await page.evaluate(()=>(window as typeof window & {__audioEvidence:{starts:number;running:boolean}}).__audioEvidence)).toMatchObject({starts:1,running:true});
+ await choose(page,'Rolex');const before=await page.evaluate(()=>(window as typeof window & {__audioEvidence:{starts:number}}).__audioEvidence.starts);expect(before).toBeGreaterThan(1);await sound.click();await expect(sound).toHaveAttribute('aria-checked','false');await page.getByLabel('Model',{exact:true}).fill('Daytona');await next(page);expect(await page.evaluate(()=>(window as typeof window & {__audioEvidence:{starts:number}}).__audioEvidence.starts)).toBe(before);
+});
+test('unavailable audio is reported without claiming sound is on',async({page})=>{
+ await page.addInitScript(()=>Object.defineProperty(window,'AudioContext',{value:class{constructor(){throw new Error('Audio unavailable in test');}}}));await start(page);const sound=page.getByRole('switch',{name:'Sound',exact:true});await sound.click();await expect(sound).toHaveAttribute('aria-checked','false');await expect(page.getByRole('status')).toContainText('Sound could not start');
 });

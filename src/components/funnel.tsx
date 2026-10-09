@@ -4,6 +4,9 @@ import { choices, steps } from '@/lib/config';
 import { brandProfiles } from '@/lib/catalog';
 import { watchSchema, tradeSchema, contactSchema, requestSchema, fieldErrors } from '@/lib/validation';
 import { payloadFor, type EditableWatch } from '@/lib/state';
+import { canAutoAdvance, autoAdvanceDelay } from '@/lib/flow';
+import { useSound } from './sound';
+import { ConfirmationSeal, ConfirmationTicket } from './confirmation';
 import { recordAccepted, track } from '@/lib/analytics';
 import { submitInquiry, SubmissionError } from '@/lib/submission';
 import { clearSession } from '@/lib/storage';
@@ -14,11 +17,18 @@ import { TradeEditor } from './trade-editor';
 import { RequestReview } from './request-review';
 import { AssistantDialog } from './assistant-dialog';
 function RequestFunnel() {
-    const { state, dispatch, ready } = useRequest();
+    const { state, dispatch, ready, draftStatus } = useRequest();
     const config = useConfiguration();
     const [error, setError] = useState('');
     const [errors, setErrors] = useState<Record<string, string>>({});
     const [started, setStarted] = useState(false);
+    const [direction, setDirection] = useState('forward');
+    const { tick } = useSound();
+    const advanceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const latest = useRef(state);
+    useEffect(() => { latest.current = state; }, [state]);
+    useEffect(() => () => { if (advanceTimer.current) clearTimeout(advanceTimer.current); }, [state.step, state.activeWatchId]);
+    useEffect(() => { document.body.dataset.conciergeActive = String(started || state.step > 0); return () => { delete document.body.dataset.conciergeActive; }; }, [started, state.step]);
     const heading = useRef<HTMLHeadingElement>(null);
     const busy = useRef(false);
     const keyRef = useRef('');
@@ -30,6 +40,20 @@ function RequestFunnel() {
         heading.current?.focus({ preventScroll: !started });
         track('private_request_step_viewed', { step: state.step + 1 });
     } }, [state.step, ready, started, state.accepted]);
+    function cancelAdvance() { if (advanceTimer.current) clearTimeout(advanceTimer.current); advanceTimer.current = null; }
+    function scheduleAdvance(automatic: boolean) {
+        cancelAdvance(); setError(''); setErrors({});
+        if (!automatic) return;
+        const fromStep = state.step; const watchId = state.activeWatchId;
+        advanceTimer.current = setTimeout(() => {
+            const current = latest.current;
+            if (current.step === fromStep && current.activeWatchId === watchId && canAutoAdvance(current)) {
+                setDirection('forward'); track('private_request_step_completed', { step: fromStep + 1 });
+                dispatch({ type: 'advance', fromStep, watchId });
+            }
+        }, autoAdvanceDelay);
+    }
+    function back() { cancelAdvance(); setError(''); setDirection('back'); tick(); track('private_request_back_pressed', { step: state.step + 1 }); dispatch({ type: 'navigate', step: state.step - 1 }); }
     const update = (patch: Partial<EditableWatch>) => dispatch({ type: 'watch/update', id: watch.id, patch });
     function validateCurrent() {
         setError('');
@@ -103,8 +127,7 @@ function RequestFunnel() {
         }
         return true;
     }
-    function next() { if (validateCurrent())
-        dispatch({ type: 'navigate', step: state.step + 1 }); }
+    function next() { cancelAdvance(); if (validateCurrent()) { setDirection('forward'); tick(); track('private_request_step_completed', { step: state.step + 1 }); dispatch(state.reviewReturn && step.id !== 'brand' ? { type: 'review/return' } : { type: 'navigate', step: state.step + 1 }); } }
     async function submit() {
         if (busy.current)
             return;
@@ -131,7 +154,7 @@ function RequestFunnel() {
                 clearSession(sessionStorage);
             }
             catch { }
-            recordAccepted(result.requestId, result.preview);
+            recordAccepted(result.requestId, result.preview); tick();
         }
         catch (e) {
             dispatch({ type: 'submission/failure' });
@@ -144,29 +167,29 @@ function RequestFunnel() {
         }
     }
     if (state.accepted)
-        return <section className="request-card success" aria-labelledby="received-title"><p className="eyebrow">Private request received</p><h2 id="received-title" ref={heading} tabIndex={-1}>Your concierge will take it from here.</h2><p>{state.accepted.preview ? 'Demo complete. No request or email was sent.' : config.copy.success}</p><p className="ticket">Request <strong>{state.accepted.requestId}</strong></p>{state.tradeIn === 'Yes' ? <p>For each trade-in, your concierge will ask for photos of the dial, caseback, and everything included.</p> : null}<a className="primary" href={config.mainUrl}>Explore Omni Timepieces ↗</a><button className="quiet-button" type="button" onClick={() => { keyRef.current = ''; dispatch({ type: 'reset', key: crypto.randomUUID() }); }}>Start another request</button></section>;
+        return <section className="request-card success" aria-labelledby="received-title"><ConfirmationSeal /><p className="eyebrow">Private request received</p><h2 id="received-title" ref={heading} tabIndex={-1}>Your concierge will take it from here.</h2><p>{state.accepted.preview ? 'Demo complete. No request or email was sent.' : config.copy.success}</p><ConfirmationTicket requestId={state.accepted.requestId}/><ol className="next-steps"><li><strong>We review your brief</strong><span>Your watch preferences and any trade details.</span></li><li><strong>Your concierge follows up</strong><span>A personal discussion through your selected method.</span></li><li><strong>You consider the options</strong><span>Availability and terms are confirmed before any decision.</span></li></ol>{state.tradeIn === 'Yes' ? <p>For each trade-in, your concierge will ask for photos of the dial, caseback, and everything included.</p> : null}<a className="primary" href={config.mainUrl}>Explore Omni Timepieces ↗</a><button className="quiet-button" type="button" onClick={() => { keyRef.current = ''; dispatch({ type: 'reset', key: crypto.randomUUID() }); }}>Start another request</button></section>;
     return <section className={`request-card ${started ? 'is-started' : ''}`} aria-label="Private watch request"><div className="mobile-start"><p className="eyebrow">Private request</p><h2>Your next chapter, on your wrist.</h2><button className="primary" type="button" onClick={() => { setStarted(true); heading.current?.focus(); }}>Begin your request →</button></div>
- <form id="request-form" noValidate onSubmit={e => { e.preventDefault(); if (state.step === steps.length - 1)
+ <form id="request-form" noValidate onKeyDown={event => { const target = event.target as HTMLElement; if (target.closest("input, textarea, select, dialog") || event.altKey || event.ctrlKey || event.metaKey || event.repeat) return; if (event.key === "Escape" && state.step > 0) { event.preventDefault(); back(); } else if (/^[1-9]$/.test(event.key)) { const options = event.currentTarget.querySelectorAll<HTMLButtonElement>(".step-content [role=radiogroup] [role=radio]"); const option = options[Number(event.key) - 1]; if (option) { event.preventDefault(); option.focus(); option.click(); } } }} onSubmit={e => { e.preventDefault(); if (state.step === steps.length - 1)
         void submit();
     else
         next(); }}>
  <fieldset className="submission-fields" disabled={state.status === 'submitting'}><legend className="sr-only">Watch inquiry</legend>
- <div className="progress-meta"><span>{step.label}</span><span>{String(state.step + 1).padStart(2, '0')} / {String(steps.length).padStart(2, '0')}</span></div><progress max={steps.length} value={state.step + 1} aria-label="Request progress"/>
- <div className="item-tabs" aria-label="Requested watches">{state.watches.map((w, i) => <div key={w.id}><button type="button" aria-pressed={w.id === state.activeWatchId} onClick={() => { dispatch({ type: 'watch/switch', id: w.id }); dispatch({ type: 'navigate', step: 1 }); setError(''); }}>Watch {i + 1}{w.model ? `: ${w.model}` : ''}</button>{state.watches.length > 1 ? <button className="remove" aria-label={`Remove watch ${i + 1}`} type="button" onClick={() => dispatch({ type: 'watch/remove', id: w.id })}>×</button> : null}</div>)}</div>
- <p className="eyebrow">{step.label}</p><h2 ref={heading} tabIndex={-1}>{step.title}</h2>
- {step.id === 'brand' ? <><Choices label="Watch brand" options={[...Object.keys(brandProfiles), 'Other']} value={Object.hasOwn(brandProfiles, watch.brand) ? watch.brand : watch.brand ? 'Other' : ''} onChange={brand => update({ brand })}/>{watch.brand && !Object.hasOwn(brandProfiles, watch.brand) ? <Field label="Brand name" required value={watch.brand === 'Other' ? '' : watch.brand} onChange={brand => update({ brand })}/> : null}</> : null}
- {step.id === 'watch' ? <><WatchDetails watch={watch}/><AssistantDialog /><div className="field-grid"><Field label="Inspiration link" value={state.inspirationUrl} type="url" onChange={inspirationUrl => dispatch({ type: 'update', patch: { inspirationUrl } })}/></div></> : null}
- {step.id === 'occasion' || step.id === 'condition' || step.id === 'timeline' || step.id === 'budget' ? <Choices label={step.label} value={watch[step.id]} options={choices[step.id]} onChange={value => { update({ [step.id]: value }); }}/> : null}
- {step.id === 'condition' ? <div className="field"><label htmlFor="condition-notes">Condition notes <span>Optional</span></label><textarea id="condition-notes" value={state.conditionNotes} maxLength={3000} onChange={e => dispatch({ type: 'update', patch: { conditionNotes: e.target.value } })}/></div> : null}
+ <div className="progress-meta"><span>{step.label}</span><span>{String(state.step + 1).padStart(2, '0')} / {String(steps.length).padStart(2, '0')}</span></div><progress className="sr-only" max={steps.length} value={state.step + 1} aria-label="Request progress"/><div className="progress-track" aria-hidden="true">{steps.map((item, i) => <i key={item.id} className={i < state.step ? "is-complete" : i === state.step ? "is-current" : ""}/>)}</div><p className="sr-only" aria-live="polite">Step {state.step + 1} of {steps.length}: {step.label}</p>
+ <p className="draft-status">{draftStatus === "saved" ? "Saved in this tab." : draftStatus === "unavailable" ? "Draft saving is unavailable in this browser." : "Saving this draft…"}</p><div className="item-tabs" aria-label="Requested watches">{state.watches.map((w, i) => <div key={w.id}><button type="button" aria-pressed={w.id === state.activeWatchId} onClick={() => { dispatch({ type: 'watch/switch', id: w.id }); dispatch({ type: 'navigate', step: 1 }); setError(''); }}>Watch {i + 1}{w.model ? `: ${w.model}` : ''}</button>{state.watches.length > 1 ? <button className="remove" aria-label={`Remove watch ${i + 1}`} type="button" onClick={() => dispatch({ type: 'watch/remove', id: w.id })}>×</button> : null}</div>)}</div>
+ {step.id === "trade" || step.id === "review" ? <button className="add-watch-button" type="button" disabled={state.watches.length >= config.maxWatches} onClick={() => { cancelAdvance(); dispatch({ type: "watch/add", id: crypto.randomUUID() }); }}>Add another requested watch</button> : null}
+ <div className="step-content" data-direction={direction} key={`${state.step}-${state.activeWatchId}`}><h2 ref={heading} tabIndex={-1}>{step.title}</h2>
+ {step.id === 'brand' ? <><Choices label="Watch brand" variant="brand" automatic options={[...Object.keys(brandProfiles), 'Other']} value={Object.hasOwn(brandProfiles, watch.brand) ? watch.brand : watch.brand ? 'Other' : ''} onChange={(brand, automatic) => { update({ brand }); scheduleAdvance(automatic && brand !== "Other"); }}/>{watch.brand && !Object.hasOwn(brandProfiles, watch.brand) ? <Field label="Brand name" required value={watch.brand === 'Other' ? '' : watch.brand} onChange={brand => update({ brand })}/> : null}</> : null}
+ {step.id === 'watch' ? <><WatchDetails watch={watch}/><AssistantDialog /><div className="field"><label htmlFor="condition-notes">Condition notes <span>Optional</span></label><textarea id="condition-notes" value={state.conditionNotes} maxLength={3000} placeholder="Any condition details you would like us to consider" onChange={e => dispatch({ type: "update", patch: { conditionNotes: e.target.value } })}/></div><div className="field-grid"><Field label="Inspiration link" value={state.inspirationUrl} type="url" onChange={inspirationUrl => dispatch({ type: 'update', patch: { inspirationUrl } })}/></div></> : null}
+ {step.id === 'occasion' || step.id === 'condition' || step.id === 'timeline' || step.id === 'budget' ? <Choices label={step.label} variant={step.id} automatic value={watch[step.id]} options={choices[step.id]} descriptions={step.id === "condition" ? { "New / unworn": "An unworn piece, with presentation confirmed separately.", "Pre-owned": "Previously worn, with condition discussed in detail.", "Open to either": "The right configuration matters most." } : {}} onChange={(value, automatic) => { update({ [step.id]: value }); scheduleAdvance(automatic && value !== "Custom"); }}/> : null}
  {step.id === 'budget' && watch.budget === 'Custom' ? <div className="field-grid"><Field label={`From (${config.currency})`} value={watch.budgetMin} type="number" onChange={v => update({ budgetMin: v === '' ? undefined : Number(v) })}/><Field label={`Up to (${config.currency})`} required value={watch.budgetMax} type="number" onChange={v => update({ budgetMax: v === '' ? undefined : Number(v) })}/></div> : null}
  {step.id === 'budget' ? <><p className="helper">All budgets are in {config.currency}. Your range remains private.</p><button className="quiet-button" type="button" disabled={state.watches.length >= config.maxWatches} onClick={() => { if (validateCurrent())
         dispatch({ type: 'watch/add', id: crypto.randomUUID() }); }}>Add another requested watch</button></> : null}
- {step.id === 'trade' ? <TradeEditor /> : null}
- {step.id === 'contact' ? <><div className="field-grid">{(['fullName', 'email', 'phone', 'location'] as const).map(field => <Field key={field} label={{ fullName: 'Full name', email: 'Email', phone: 'Phone', location: 'City / country' }[field]} value={state.contact[field]} type={field === 'email' ? 'email' : field === 'phone' ? 'tel' : 'text'} required={field !== 'phone' || Boolean(state.contact.preferredContact && state.contact.preferredContact !== 'Email')} autoComplete={{ fullName: 'name', email: 'email', phone: 'tel', location: 'address-level2' }[field]} error={errors[field]} onChange={value => dispatch({ type: 'contact/update', patch: { [field]: value } })}/>)}</div><p className="helper">We’ll send your receipt by email. How should your concierge follow up?</p><Choices label="Preferred contact method" value={state.contact.preferredContact} options={choices.preferredContact} onChange={value => dispatch({ type: 'contact/update', patch: { preferredContact: value as typeof state.contact.preferredContact } })}/></> : null}
- {step.id === 'review' ? <RequestReview /> : null}
+ {step.id === 'trade' ? <TradeEditor onChoice={scheduleAdvance} /> : null}
+ {step.id === 'contact' ? <><div className="field-grid contact-fields">{(['fullName', 'email', 'phone', 'location'] as const).map(field => <Field key={field} label={{ fullName: 'Full name', email: 'Email', phone: 'Phone', location: 'City / country' }[field]} value={state.contact[field]} type={field === 'email' ? 'email' : field === 'phone' ? 'tel' : 'text'} required={field !== 'phone' || Boolean(state.contact.preferredContact && state.contact.preferredContact !== 'Email')} autoComplete={{ fullName: 'name', email: 'email', phone: 'tel', location: 'address-level2' }[field]} error={errors[field]} onChange={value => dispatch({ type: 'contact/update', patch: { [field]: value } })}/>)}</div><p className="helper">We’ll send your receipt by email. How should your concierge follow up?</p><Choices label="Preferred contact method" value={state.contact.preferredContact} options={choices.preferredContact} onChange={(value, automatic) => { dispatch({ type: "contact/update", patch: { preferredContact: value as typeof state.contact.preferredContact } }); scheduleAdvance(automatic); }}/></> : null}
+ {step.id === 'review' ? <RequestReview /> : null}</div>
  <div className="honeypot" aria-hidden="true"><label htmlFor="website">Leave this blank</label><input id="website" ref={website} tabIndex={-1} autoComplete="off"/></div>
  {error ? <div className="error" role="alert"><p>{error}</p>{step.id === 'review' && Object.keys(errors).length ? <ul>{Object.entries(errors).map(([field, message]) => <li key={field}>{field}: {message}</li>)}</ul> : null}</div> : null}
- <div className="form-nav"><button className="quiet-button" type="button" disabled={state.step === 0 || state.status === 'submitting'} onClick={() => { setError(''); dispatch({ type: 'navigate', step: state.step - 1 }); }}>← Back</button><span className="save-note">Saved for this session</span><button className="primary" type="submit" disabled={!ready || state.status === 'submitting'} aria-busy={state.status === 'submitting'}>{state.status === 'submitting' ? 'Saving…' : step.id === 'review' ? 'Send private request' : 'Continue →'}</button></div>
+ <div className="form-nav"><button className="quiet-button" type="button" disabled={state.step === 0 || state.status === 'submitting'} onClick={back}>← Back</button><span className="save-note">Saved for this session</span><button className="primary" type="submit" disabled={!ready || state.status === 'submitting'} aria-busy={state.status === 'submitting'}>{state.status === 'submitting' ? 'Saving…' : step.id === 'review' ? 'Send private request' : state.reviewReturn ? 'Save and return to review' : 'Continue →'}</button></div>
  </fieldset></form></section>;
 }
 export function Funnel() { return <RequestProvider><RequestFunnel /></RequestProvider>; }

@@ -55,7 +55,7 @@ Public pages support search/retrieval bots including OAI-SearchBot; GPTBot train
 
 Existing imagery in `public/assets/images` is original generated prototype artwork, not approved campaign/product photography. Replace it with licensed approved photography before release. Brand copy and Privacy/Terms require owner review for actual business practices. No inventory, pricing, testimonials, or official manufacturer affiliation is claimed.
 
-The mechanical watch audio keeps the original CC0 provenance: celesti-whispers, “wristwatch,mechanical,clock,ticking,contact mic,loop,denoised.wav”, https://freesound.org/people/celesti-whispers/sounds/495889/ (https://creativecommons.org/publicdomain/zero/1.0/). It is loaded only after sound opt-in and stops when the page is hidden.
+The retained legacy audio file has CC0 provenance: celesti-whispers, “wristwatch,mechanical,clock,ticking,contact mic,loop,denoised.wav”, https://freesound.org/people/celesti-whispers/sounds/495889/ (https://creativecommons.org/publicdomain/zero/1.0/). The current interface synthesizes brief mechanical selection ticks with Web Audio at a fixed low gain. Sound is off initially, starts only after explicit opt-in, and switches off when the page is hidden. It never downloads or autoplays the legacy loop. The animated sound control has only on/off states; there is no volume slider. Playback errors leave the control off and provide a retry message.
 
 ## Release procedure
 
@@ -68,3 +68,9 @@ First-paint theme selection uses a nonce-protected inline bootstrap; it avoids a
 ## Visual identity
 
 `src/components/watch-movement.tsx` supplies the shared decorative calibre on the funnel and public pages. Rotating gears, the ticking seconds wheel and oscillating balance use CSS transforms and stop for reduced-motion preferences. `src/styles/atmosphere.css` owns the mechanism and metal/paper surfaces; `src/styles/editorial.css` owns public reading layouts. All colors derive from semantic light/dark roles in the shared palette. Newsreader and DM Sans remain the original typefaces.
+
+## Interaction design
+
+Simple choices advance after a 280ms selection cue. Arrow keys explore radio choices without advancing; Enter confirms. Back cancels pending advancement. Custom brands, custom budgets, model details, trade details, and incomplete contact details stay open for completion. Review edits return to Review directly, except changing a brand always requires model details first. Progress comes from the central step definitions.
+
+The sun/moon/system appearance switch uses a sliding indicator, keyboard radio controls, and the saved preference; all motion respects reduced-motion settings. The mobile action bar stays reachable while long content scrolls. The draft indicator reports actual session-storage success or failure. The confirmation screen provides a copyable request ID and factual next steps. The public image directory uses ordinary server-rendered links and lazy-loaded images.

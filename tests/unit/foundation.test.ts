@@ -67,3 +67,32 @@ test('specific trade presentation requires a description on the authoritative sc
  assert.equal(requestSchema.safeParse({...base,tradeIn:'Yes',tradeIns:[trade]}).success,false);
  assert.equal(requestSchema.safeParse({...base,tradeIn:'Yes',tradeIns:[{...trade,setOther:'Original box, no papers'}]}).success,true);
 });
+
+test('automatic advancement is guarded against custom fields, stale timers and incomplete contact details', () => {
+ let state = initialState();
+ const advance = (fromStep: number, watchId = state.activeWatchId) => reducer(state, { type: 'advance', fromStep, watchId });
+ state = reducer(state, { type: 'watch/update', id: state.activeWatchId, patch: { brand: 'Other' } });
+ assert.equal(advance(0).step, 0);
+ state = reducer(state, { type: 'watch/update', id: state.activeWatchId, patch: { brand: 'Rolex' } });
+ state = advance(0); assert.equal(state.step, 1);
+ assert.equal(advance(0).step, 1);
+ state = reducer(state, { type: 'navigate', step: 5 });
+ state = reducer(state, { type: 'watch/update', id: state.activeWatchId, patch: { budget: 'Custom' } });
+ assert.equal(advance(5).step, 5);
+ state = reducer(state, { type: 'navigate', step: 7 });
+ assert.equal(advance(7).step, 7);
+ state = reducer(state, { type: 'contact/update', patch: fixture().contact });
+ assert.equal(advance(7).step, 8);
+ assert.equal(advance(7, 'stale-watch').step, 7);
+});
+test('review edits return directly and a brand change still requires a model', () => {
+ let state=initialState();state.watches=fixture().watches;state.activeWatchId=state.watches[0].id;
+ state=reducer(state,{type:'review/edit',step:4});
+ state=reducer(state,{type:'watch/update',id:state.activeWatchId,patch:{timeline:'Within 2 weeks'}});
+ state=reducer(state,{type:'advance',fromStep:4,watchId:state.activeWatchId});
+ assert.equal(state.step,8);assert.equal(state.reviewReturn,false);
+ state=reducer(state,{type:'review/edit',step:0});
+ state=reducer(state,{type:'watch/update',id:state.activeWatchId,patch:{brand:'Omega'}});
+ state=reducer(state,{type:'advance',fromStep:0,watchId:state.activeWatchId});
+ assert.equal(state.step,1);assert.equal(state.reviewReturn,true);assert.equal(state.watches[0].model,'');
+});

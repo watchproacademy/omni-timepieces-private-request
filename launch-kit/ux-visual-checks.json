@@ -1,0 +1,38 @@
+[
+  {
+    "theme": "light",
+    "device": "desktop",
+    "errors": [],
+    "gearMoves": true,
+    "reducedMotion": "none",
+    "overflow": false,
+    "themeColor": "#e8dfcf"
+  },
+  {
+    "theme": "light",
+    "device": "mobile",
+    "errors": [],
+    "gearMoves": true,
+    "reducedMotion": "none",
+    "overflow": false,
+    "themeColor": "#e8dfcf"
+  },
+  {
+    "theme": "dark",
+    "device": "desktop",
+    "errors": [],
+    "gearMoves": true,
+    "reducedMotion": "none",
+    "overflow": false,
+    "themeColor": "#191612"
+  },
+  {
+    "theme": "dark",
+    "device": "mobile",
+    "errors": [],
+    "gearMoves": true,
+    "reducedMotion": "none",
+    "overflow": false,
+    "themeColor": "#191612"
+  }
+]
