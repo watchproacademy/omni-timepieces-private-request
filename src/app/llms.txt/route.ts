@@ -1,0 +1,4 @@
+import { config } from '@/lib/config';
+import { brandPages, publicPages } from '@/lib/content';
+export const dynamic = 'force-static';
+export function GET() { return new Response(`# ${config.name}\n\nPrivate watch sourcing inquiries. Catalog entries are examples, not current inventory. Budgets use USD.\n\n## Public guides\n\n- [Private request](${config.siteUrl}/): Start a sourcing inquiry.\n${Object.entries(publicPages).map(([path, p]) => `- [${p.title}](${config.siteUrl}/${path}): ${p.description}`).join('\n')}\n\n## Brand guides\n\n${brandPages.map(b => `- [${b.name}](${config.siteUrl}/brands/${b.slug}): ${b.intro}`).join('\n')}\n\nSubmitted inquiries, contact information, and drafts are private and are not available through these pages.\n`, { headers: { 'Content-Type': 'text/plain; charset=utf-8' } }); }

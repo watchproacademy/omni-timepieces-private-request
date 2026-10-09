@@ -1,5 +1,7 @@
 launch-kit/
 tests/
+legacy/
+assets/
 .env*
 .tools/
 *.log

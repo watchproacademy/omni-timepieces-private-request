@@ -1,0 +1,17 @@
+'use client';
+import { catalogBrands, commonDialOptions, commonWearingOptions, profileForBrand, referencesFor, wearingOptionsFor, yearsFor } from '@/lib/catalog';
+import { choices, config } from '@/lib/config';
+import { useRequest } from './providers';
+import { Choices, Field, SelectField } from './fields';
+import type { EditableTrade } from '@/lib/state';
+export function TradeEditor() {
+    const { state, dispatch } = useRequest();
+    const trade = state.trades.find(t => t.id === state.activeTradeId) || state.trades[0];
+    const profile = profileForBrand(trade?.brand || '');
+    const update = (patch: Partial<EditableTrade>) => dispatch({ type: 'trade/update', id: trade.id, patch });
+    return <><Choices label="Trade-in" value={state.tradeIn} options={['No', 'Yes']} onChange={value => { dispatch({ type: 'update', patch: { tradeIn: value as 'Yes' | 'No' } }); if (value === 'Yes' && !state.trades.length)
+        dispatch({ type: 'trade/add', id: crypto.randomUUID() }); }}/>
+ {state.tradeIn === 'Yes' ? <><div className="item-tabs" aria-label="Trade-in watches">{state.trades.map((t, i) => <div key={t.id}><button type="button" aria-pressed={t.id === state.activeTradeId} onClick={() => dispatch({ type: 'trade/switch', id: t.id })}>Trade {i + 1}: {t.model || 'New watch'}</button><button className="remove" type="button" aria-label={`Remove trade ${i + 1}`} onClick={() => dispatch({ type: 'trade/remove', id: t.id })}>×</button></div>)}</div>
+ {trade ? <div className="field-grid"><Field label="Trade brand" value={trade.brand} required options={catalogBrands} onChange={brand => update({ brand, model: '', reference: '', dial: '', bracelet: '' })}/><Field label="Trade model" value={trade.model} required options={profile.suggestions} onChange={model => update({ model, reference: '', dial: '', bracelet: '' })}/><Field label="Trade reference" value={trade.reference} options={referencesFor(trade.brand, trade.model)} onChange={reference => update({ reference })}/><Field label="Trade year" value={trade.year} options={yearsFor()} onChange={year => update({ year })}/><Field label="Trade dial" value={trade.dial} options={profile.dials.length ? profile.dials : commonDialOptions} onChange={dial => update({ dial })}/><Field label="Trade bracelet or strap" value={trade.bracelet} options={[...wearingOptionsFor(profile, trade.model), ...commonWearingOptions]} onChange={bracelet => update({ bracelet })}/><SelectField label="Trade condition" required value={trade.condition} options={choices.tradeCondition} onChange={condition => update({ condition: condition as EditableTrade['condition'] })}/><SelectField label="Trade presentation" required value={trade.set} options={choices.tradeSet} onChange={set => update({ set: set as EditableTrade['set'] })}/>{trade.set === 'Other / not sure' ? <Field label="What is included?" required value={trade.setOther} onChange={setOther => update({ setOther })}/> : null}<Field label={`Expected trade value (${config.currency})`} type="number" value={trade.expectedValue} onChange={value => update({ expectedValue: value === '' ? undefined : Number(value) })}/></div> : <p>Add a watch to describe your trade.</p>}
+ <p className="helper">Your expectation is a starting point for discussion, not a final appraisal.</p><button className="quiet-button" type="button" disabled={state.trades.length >= config.maxTrades} onClick={() => dispatch({ type: 'trade/add', id: crypto.randomUUID() })}>Add another trade-in</button></> : null}</>;
+}

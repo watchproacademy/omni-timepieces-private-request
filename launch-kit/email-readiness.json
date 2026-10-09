@@ -1,0 +1,7 @@
+{
+  "credentialPresent": true,
+  "ownerConfigured": true,
+  "senderConfigured": true,
+  "domainInspectionStatus": null,
+  "inspectionError": "Cannot inspect production Sensitive values through a local export. Prior invalid-key response used an export placeholder and is not evidence of a broken production key."
+}

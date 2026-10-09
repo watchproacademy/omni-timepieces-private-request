@@ -1,0 +1,3 @@
+import { initialState } from '../../src/lib/state';
+import { requestSchema } from '../../src/lib/validation';
+export function fixture() { const state = initialState(); Object.assign(state.watches[0], { brand: 'Rolex', model: 'Daytona', condition: 'Pre-owned', occasion: 'For myself', timeline: 'No fixed timeline', budget: 'Flexible' }); state.contact = { fullName: 'Test Client', email: 'test@example.com', phone: '', location: 'Miami, USA', preferredContact: 'Email' }; state.tradeIn = 'No'; state.consent = true; return requestSchema.parse({ schemaVersion: 4, watches: state.watches, tradeIn: 'No', tradeIns: [], contact: state.contact, consent: true, currency: 'USD', conditionNotes: '', inspirationUrl: '', attribution: state.attribution }); }

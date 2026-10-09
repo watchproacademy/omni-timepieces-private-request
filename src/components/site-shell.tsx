@@ -1,0 +1,12 @@
+import Link from 'next/link';
+import { headers } from 'next/headers';
+import { config } from '@/lib/config';
+import { ThemeControl } from './providers';
+import { SoundControl } from './sound';
+export function Header({ sound = false }: {
+    sound?: boolean;
+}) { return <header className="topbar"><Link className="wordmark" href="/"><strong>{config.name}</strong><span>Private request</span></Link><div className="header-tools">{sound ? <SoundControl /> : null}<ThemeControl /></div></header>; }
+export function Footer() { return <footer className="site-footer"><nav aria-label="Public pages"><Link href="/services">Our service</Link><Link href="/brands">Brands</Link><Link href="/faq">Questions</Link><Link href="/privacy">Privacy</Link><Link href="/terms">Terms</Link></nav><span>{config.legalName}</span></footer>; }
+export async function StructuredData({ value }: {
+    value: unknown;
+}) { const nonce = (await headers()).get('x-nonce') || undefined; return <script nonce={nonce} type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(value).replaceAll('<', '\\u003c') }}/>; }

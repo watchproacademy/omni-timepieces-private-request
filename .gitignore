@@ -4,3 +4,9 @@
 *.log
 .env*
 !.env.example
+node_modules/
+.next/
+*.tsbuildinfo
+playwright-report/
+test-results/
+.pnpm-store/

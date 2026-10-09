@@ -1,0 +1,17 @@
+{
+  "method": "Local optimized preview; Chromium mobile 390x844, 4x CPU slowdown, 100ms latency, 1.6Mbps download. Diagnostic sample, not field data or Lighthouse.",
+  "results": [
+    {
+      "path": "/",
+      "lcp": 348,
+      "cls": 0.0025362525302270204,
+      "fcp": 348
+    },
+    {
+      "path": "/brands/rolex",
+      "lcp": 452,
+      "cls": 0.0010669784982267083,
+      "fcp": 452
+    }
+  ]
+}

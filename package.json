@@ -1,0 +1,41 @@
+{
+  "name": "omni-private-request",
+  "version": "1.0.0",
+  "private": true,
+  "engines": {
+    "node": "24.x"
+  },
+  "packageManager": "pnpm@11.19.0",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build --webpack",
+    "start": "next start",
+    "typecheck": "next typegen && tsc --noEmit",
+    "lint": "eslint .",
+    "test": "WATCH_REQUEST_PREVIEW_MODE=false VERCEL_ENV=test tsx --test tests/unit/*.test.ts",
+    "test:browser": "playwright test",
+    "db:migrate": "tsx scripts/migrate.ts",
+    "check": "pnpm typecheck && pnpm lint && pnpm test && pnpm build"
+  },
+  "dependencies": {
+    "next": "16.3.6",
+    "react": "19.3.0",
+    "react-dom": "19.3.0",
+    "zod": "4.6.5",
+    "@neondatabase/serverless": "1.2.0",
+    "@vercel/queue": "0.8.0"
+  },
+  "devDependencies": {
+    "typescript": "5.9.3",
+    "@types/node": "26.6.4",
+    "@types/react": "19.3.0",
+    "@types/react-dom": "19.3.0",
+    "tsx": "4.23.15",
+    "eslint": "9.39.1",
+    "eslint-config-next": "16.4.0",
+    "@playwright/test": "1.64.0",
+    "@axe-core/playwright": "4.13.0",
+    "dotenv": "18.0.6",
+    "@electric-sql/pglite": "0.5.8"
+  }
+}
