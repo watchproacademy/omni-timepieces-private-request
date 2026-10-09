@@ -47,3 +47,13 @@ Fonts were compressed to licensed WOFF2 (62% smaller), decorative imagery was as
 Isolated mobile Lighthouse results: funnel performance 93 / accessibility 100 / best practices 96, LCP 3.1s, CLS 0, TBT 70ms; representative brand page performance 97 / accessibility 100 / best practices 100, LCP 2.5s, CLS 0, TBT 90ms. The funnel LCP target still needs production verification/improvement; these local measurements are not field results. Reports are stored beside this document.
 
 Final hosted demo checks pass: HTTP 200 initial Rolex guide HTML, clean canonical, breadcrumbs, noindex, nonce-protected theme bootstrap, WOFF2 fonts, disallow-all preview robots, and explicitly marked demo acceptance. No live inquiry or email was created.
+
+## Visual correction approved by the owner
+
+Restored a shared mechanical watch atmosphere across all pages: rotating gears, a ticking seconds wheel, an oscillating balance and escapement, and the existing movement photograph. Light mode now uses warm parchment, champagne/bronze surfaces and layered paper panels rather than near-white surfaces. Original Newsreader/DM Sans families are unchanged. Public pages use a shared editorial hero, reading panels and primary navigation. Component colors remain semantic tokens.
+
+Verified type checks, lint, 25 unit/database tests, optimized build and a clean 40-test browser run at CI concurrency (58.6s). Two scenarios timed out during an earlier run competing with 14 accessibility audits; both passed independently and in the clean full rerun without changing timeouts or assertions. The seven sampled routes passed automated WCAG checks in both themes, public pages fit 320px, animations visibly advance and stop under reduced motion, and no script errors were observed. Desktop/mobile screenshots are in `screenshots/design-refinement`.
+
+Mobile localhost Lighthouse on the revised services page: performance 92, accessibility 100, best practices 100; LCP 3.2s, CLS 0, TBT 60ms. These are lab measurements; production performance remains an open release gate.
+
+Refined protected demo preview is READY: https://omni-timepieces-private-request-9m3tj96u2-watch-pro-academy.vercel.app (`dpl_BYX6a5bAkiUpdKvkbMbQLarbQE8a`, application commit `fc293dc`). Existing production and account/infrastructure gates are unchanged.
