@@ -40,3 +40,5 @@ Sources checked during implementation:
 - https://vercel.com/docs/plans/hobby
 - https://vercel.com/docs/queues/pricing
 - https://resend.com/docs/dashboard/emails/idempotency-keys
+
+- Check every used watch image on the hosted deployment, including both `/assets/images/…` and the actual optimized `/_next/image` URL. Require successful image responses and decoded pixels. A passing local browser suite does not prove deployment ignore rules included the assets. Keep legacy root exclusions anchored (for example `/assets/`) so `public/assets/` is uploaded.
