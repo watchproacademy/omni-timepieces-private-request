@@ -64,3 +64,7 @@ See `launch-kit/implementation-verification.md` for completed verification and o
 Font assets are compressed WOFF2 files hosted locally in `public/fonts` with `font-display: swap`. DM Sans and Newsreader retain their SIL Open Font License files alongside the fonts. There is no external Google Fonts request on page load.
 
 First-paint theme selection uses a nonce-protected inline bootstrap; it avoids an extra blocking request. Decorative photography loads with low priority. Typeface files retain their original names and licenses; compression reduced the original font bytes by 62%.
+
+## Visual identity
+
+`src/components/watch-movement.tsx` supplies the shared decorative calibre on the funnel and public pages. Rotating gears, the ticking seconds wheel and oscillating balance use CSS transforms and stop for reduced-motion preferences. `src/styles/atmosphere.css` owns the mechanism and metal/paper surfaces; `src/styles/editorial.css` owns public reading layouts. All colors derive from semantic light/dark roles in the shared palette. Newsreader and DM Sans remain the original typefaces.
