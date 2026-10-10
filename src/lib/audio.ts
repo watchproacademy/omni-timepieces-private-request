@@ -88,7 +88,13 @@ export class ConciergeAudio {
         if (!this.enabled || !context || context.state !== 'running' || !this.master) return;
         // Schedule on the audio clock so JS/render delays cannot shake the beat.
         // After a device interruption, skip missed beats instead of catching up.
-        if (this.nextBeat < context.currentTime) this.nextBeat = context.currentTime + .015;
+        if (this.nextBeat < context.currentTime) {
+            // Keep the original phase and alternating pallet sequence even if
+            // the device clock jumps during startup or the JS thread stalls.
+            const missed = Math.ceil((context.currentTime - this.nextBeat) / .125);
+            this.nextBeat += missed * .125;
+            this.beat += missed;
+        }
         while (this.nextBeat < context.currentTime + .08) {
             const source = context.createBufferSource();
             source.buffer = this.buffers[this.beat++ % this.buffers.length];

@@ -29,7 +29,14 @@ test('mechanical contacts stay quiet and evenly timed across toggles and navigat
     await expect(sound).toHaveAttribute('aria-checked', 'true');
     await expect.poll(async () => (await read()).times.length).toBeGreaterThanOrEqual(10);
     const playing = await read();
-    for (let i = 1; i < playing.times.length; i++) expect(playing.times[i] - playing.times[i - 1]).toBeCloseTo(.125, 5);
+    const intervals = playing.times.slice(1).map((time, i) => time - playing.times[i]);
+    // A device clock can jump during startup (Linux WebKit does this). Recovery
+    // must skip whole beats without bunching contacts or shifting their phase.
+    for (const interval of intervals) {
+        expect(interval).toBeGreaterThanOrEqual(.125 - .000005);
+        expect(interval / .125).toBeCloseTo(Math.round(interval / .125), 5);
+    }
+    expect(intervals.filter(interval => Math.abs(interval - .125) < .000005).length).toBeGreaterThanOrEqual(6);
     expect(playing.peaks.every(peak => peak > .01 && peak < .8)).toBe(true);
     expect(playing.durations.every(duration => duration >= .032 && duration < .033)).toBe(true);
     // Root provider survives client navigation; it must not start another loop.
