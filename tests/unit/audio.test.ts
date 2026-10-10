@@ -4,13 +4,11 @@ import { ConciergeAudio } from '../../src/lib/audio';
 
 test('audio recovery skips missed contacts on the original beat grid and cancels queued sources', async () => {
     const starts: { time: number; buffer: unknown; stopped: boolean }[] = [];
-    let context: Device;
     class Device {
         state = 'suspended';
         currentTime = 0;
         sampleRate = 48000;
         destination = {};
-        constructor() { context = this; }
         async resume() { this.state = 'running'; }
         async suspend() { this.state = 'suspended'; }
         async close() { this.state = 'closed'; }
@@ -31,15 +29,15 @@ test('audio recovery skips missed contacts on the original beat grid and cancels
     const previous = Object.getOwnPropertyDescriptor(globalThis, 'window');
     Object.defineProperty(globalThis, 'window', { configurable: true, value: { AudioContext: Device } });
     const audio = new ConciergeAudio();
-    const scheduler = audio as unknown as { schedule: () => void; buffers: unknown[] };
+    const scheduler = audio as unknown as { schedule: () => void; buffers: unknown[]; context: Device };
     try {
         await audio.enable();
         assert.equal(starts.length, 1);
         assert.equal(starts[0].time, .015);
         // Reproduce a startup clock jump, then a longer foreground JS stall.
         for (const now of [.846, 1.61]) {
-            context!.currentTime = now;
-            const before = starts.length;
+            scheduler.context.currentTime = now;
+            const before: number = starts.length;
             scheduler.schedule();
             assert.equal(starts.length, before + 1, 'missed beats must not produce a catch-up burst');
             const next = starts.at(-1)!;
@@ -51,7 +49,7 @@ test('audio recovery skips missed contacts on the original beat grid and cancels
         audio.disable();
         assert.ok(starts.every(source => source.stopped), 'disable cancels every queued contact');
         const off = starts.length;
-        context!.currentTime = 2;
+        scheduler.context.currentTime = 2;
         scheduler.schedule();
         assert.equal(starts.length, off);
     } finally {
