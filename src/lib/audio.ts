@@ -1,12 +1,15 @@
-/** Quiet alternating clock ticks, started only by an explicit user gesture. */
+/** A soft 4 Hz balance (eight escapement beats/second), explicitly opted into. */
 export class ConciergeAudio {
     private context: AudioContext | null = null;
     private master: GainNode | null = null;
     private enabled = false;
-    private volume = .12;
+    private volume = .18;
     private timer: ReturnType<typeof setInterval> | null = null;
     private beat = 0;
     private generation = 0;
+    private nextBeat = 0;
+    private voices = new Set<AudioBufferSourceNode>();
+    private buffers: AudioBuffer[] = [];
     async enable() {
         const generation = ++this.generation;
         const AudioContextClass = window.AudioContext || (window as typeof window & { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
@@ -16,6 +19,9 @@ export class ConciergeAudio {
             this.master = this.context.createGain();
             this.master.gain.value = this.volume;
             this.master.connect(this.context.destination);
+            // Several contact textures keep the mechanism from sounding like a
+            // repeated digital click; all are generated locally, once per context.
+            this.buffers = Array.from({ length: 8 }, (_, i) => this.makeContact(this.context!, i));
         }
         // Some devices leave resume pending indefinitely when audio is unavailable.
         // Bound startup and invalidate this attempt so a late resume cannot play.
@@ -34,25 +40,64 @@ export class ConciergeAudio {
         this.enabled = true;
         if (this.timer) clearInterval(this.timer);
         this.beat = 0;
-        this.playBeat();
-        this.timer = setInterval(() => this.playBeat(), 500);
+        this.nextBeat = this.context.currentTime + .015;
+        this.schedule();
+        this.timer = setInterval(() => this.schedule(), 25);
     }
-    disable() { if (this.timer) clearInterval(this.timer); this.timer = null; this.generation++; this.enabled = false; void this.context?.suspend().catch(() => {}); }
+    disable() {
+        if (this.timer) clearInterval(this.timer);
+        this.timer = null; this.generation++; this.enabled = false;
+        // Cancel scheduled contacts as well as the timer, so an off/on sequence
+        // cannot revive queued beats when the same context resumes.
+        for (const source of this.voices) { source.stop(); source.disconnect(); }
+        this.voices.clear();
+        void this.context?.suspend().catch(() => {});
+    }
     // Interaction hooks stay silent so clicks cannot disrupt the clock rhythm.
     tick() {}
-    private playBeat() {
+    private makeContact(context: AudioContext, variant: number) {
+        const buffer = context.createBuffer(1, Math.ceil(context.sampleRate * .032), context.sampleRate);
+        const samples = buffer.getChannelData(0);
+        const tock = variant % 2 === 1;
+        const pitch = tock ? .965 : 1;
+        // Unlock, impulse, and the quieter pallet lock: tiny contacts within a
+        // single beat, rather than a second audible wall-clock tock.
+        const contacts = [{ at: 0, level: .46 }, { at: .0028, level: 1 }, { at: .0082, level: .24 }];
+        let softenedNoise = 0;
+        for (let i = 0; i < samples.length; i++) {
+            const time = i / context.sampleRate;
+            softenedNoise += .42 * ((Math.random() * 2 - 1) - softenedNoise);
+            let sample = 0;
+            for (const contact of contacts) {
+                const age = time - contact.at;
+                if (age < 0) continue;
+                const attack = Math.min(1, age / .00045);
+                const impact = softenedNoise * .58 * Math.exp(-age / .0017);
+                const metal = (.15 * Math.sin(2 * Math.PI * 2850 * pitch * age)
+                    + .09 * Math.sin(2 * Math.PI * 4370 * pitch * age)) * Math.exp(-age / .0032);
+                const body = .07 * Math.sin(2 * Math.PI * 1180 * pitch * age) * Math.exp(-age / .0045);
+                sample += contact.level * attack * (impact + metal + body);
+            }
+            // End at zero, without an abrupt cutoff or a long ringing tail.
+            samples[i] = sample * (tock ? .94 : 1) * Math.min(1, (.032 - time) / .003);
+        }
+        return buffer;
+    }
+    private schedule() {
         const context = this.context;
         if (!this.enabled || !context || context.state !== 'running' || !this.master) return;
-        const duration = .05;
-        const buffer = context.createBuffer(1, Math.ceil(context.sampleRate * duration), context.sampleRate);
-        const samples = buffer.getChannelData(0);
-        for (let i = 0; i < samples.length; i++) samples[i] = (Math.random() * 2 - 1) * Math.exp(-i / (context.sampleRate * .009));
-        const source = context.createBufferSource(); source.buffer = buffer;
-        const filter = context.createBiquadFilter(); filter.type = 'bandpass'; filter.frequency.value = this.beat++ % 2 ? 1250 : 1900; filter.Q.value = .7;
-        const gain = context.createGain(); gain.gain.value = .7;
-        source.connect(filter).connect(gain).connect(this.master);
-        source.onended = () => { source.disconnect(); filter.disconnect(); gain.disconnect(); };
-        source.start(); source.stop(context.currentTime + duration);
+        // Schedule on the audio clock so JS/render delays cannot shake the beat.
+        // After a device interruption, skip missed beats instead of catching up.
+        if (this.nextBeat < context.currentTime) this.nextBeat = context.currentTime + .015;
+        while (this.nextBeat < context.currentTime + .08) {
+            const source = context.createBufferSource();
+            source.buffer = this.buffers[this.beat++ % this.buffers.length];
+            source.connect(this.master);
+            this.voices.add(source);
+            source.onended = () => { this.voices.delete(source); source.disconnect(); };
+            source.start(this.nextBeat);
+            this.nextBeat += .125;
+        }
     }
     dispose() { this.disable(); void this.context?.close().catch(() => {}); }
 }

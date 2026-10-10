@@ -58,4 +58,11 @@ test('rapid sound toggles preserve the latest choice and hidden tabs stop the cl
     const stopped = await page.evaluate(()=>(window as typeof window & {__clockEvidence:{starts:number}}).__clockEvidence.starts);
     await page.waitForTimeout(650);
     expect(await page.evaluate(()=>(window as typeof window & {__clockEvidence:{starts:number}}).__clockEvidence.starts)).toBe(stopped);
+    await page.evaluate(()=>{Object.defineProperty(document,'hidden',{configurable:true,value:false});document.dispatchEvent(new Event('visibilitychange'));});
+    await page.waitForTimeout(250);
+    await expect(sound).toHaveAttribute('aria-checked','false');
+    expect(await page.evaluate(()=>(window as typeof window & {__clockEvidence:{starts:number}}).__clockEvidence.starts)).toBe(stopped);
+    await sound.click();
+    await expect(sound).toHaveAttribute('aria-checked','true');
+    await expect.poll(()=>page.evaluate(()=>(window as typeof window & {__clockEvidence:{starts:number}}).__clockEvidence.starts)).toBeGreaterThan(stopped);
 });

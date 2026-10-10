@@ -11,9 +11,11 @@ export function SoundProvider({ children }: { children: ReactNode }) {
     const [error, setError] = useState('');
     useEffect(() => {
         const lifetime = intent.current;
-        const stop = () => { if (document.hidden) { intent.current.version++; engine.current?.disable(); setEnabled(false); setLoading(false); } };
+        const disable = () => { intent.current.version++; engine.current?.disable(); setEnabled(false); setLoading(false); };
+        const stop = () => { if (document.hidden) disable(); };
         document.addEventListener('visibilitychange', stop);
-        return () => { lifetime.version++; document.removeEventListener('visibilitychange', stop); engine.current?.dispose(); engine.current = null; };
+        window.addEventListener('pagehide', disable);
+        return () => { lifetime.version++; document.removeEventListener('visibilitychange', stop); window.removeEventListener('pagehide', disable); engine.current?.dispose(); engine.current = null; };
     }, []);
     const tick = useCallback(() => engine.current?.tick(), []);
     async function toggle() {
