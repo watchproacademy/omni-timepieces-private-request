@@ -255,3 +255,8 @@ export function wearingOptionsFor(profile: WatchProfile, model: string) {
 export function yearsFor(currentYear = new Date().getFullYear()) {
     return ['Current production', 'Any year', ...Array.from({ length: currentYear - 1949 }, (_, i) => String(currentYear - i))];
 }
+
+// Request ranges are preferences; trade-in years remain individual production years.
+export const yearPreferences = [2024, 2025, 2026].map(year => ({
+    label: `${year}+`, value: `${year} and newer`
+}));

@@ -38,7 +38,7 @@ export const blankTrade = (id: string): EditableTrade => ({ id, brand: '', model
 export function initialState(): RequestState {
     return { watches: [blankWatch('initial-watch')], trades: [], activeWatchId: 'initial-watch', activeTradeId: '', step: 0, reviewReturn: false, tradeIn: '', contact: { fullName: '', email: '', phone: '', location: '', preferredContact: '' }, consent: false, conditionNotes: '', inspirationUrl: '', attribution: { utm_source: '', utm_medium: '', utm_campaign: '', utm_content: '', utm_term: '', landingPage: config.siteUrl + '/' }, submissionKey: '', status: 'idle' };
 }
-export type Action = { type: 'advance'; fromStep: number; watchId: string } | { type: 'review/edit'; step: number; watchId?: string } | { type: 'review/return' } | {
+export type Action = { type: 'navigation/start' } | { type: 'advance'; fromStep: number; watchId: string } | { type: 'review/edit'; step: number; watchId?: string } | { type: 'review/return' } | {
     type: 'restore';
     state: RequestState;
 } | {
@@ -90,6 +90,7 @@ export type Action = { type: 'advance'; fromStep: number; watchId: string } | { 
 };
 export function reducer(state: RequestState, action: Action): RequestState {
     switch (action.type) {
+        case 'navigation/start': return { ...state, step: 0, reviewReturn: false };
         case 'advance': return state.step === action.fromStep && state.activeWatchId === action.watchId && canAutoAdvance(state) ? { ...state, step: state.reviewReturn && state.step !== 0 ? steps.length - 1 : Math.min(steps.length - 1, state.step + 1), reviewReturn: state.reviewReturn && state.step === 0 } : state;
         case 'review/edit': return { ...state, step: Math.max(0, Math.min(steps.length - 2, action.step)), activeWatchId: action.watchId && state.watches.some(w => w.id === action.watchId) ? action.watchId : state.activeWatchId, reviewReturn: true };
         case 'review/return': return { ...state, step: steps.length - 1, reviewReturn: false };

@@ -14,6 +14,7 @@ import { clearSession } from '@/lib/storage';
 import { RequestProvider, useRequest } from './providers';
 import { useConfiguration } from './configuration-provider';
 import { Choices, Field } from './fields';
+import { WatchRequests } from './watch-requests';
 const WatchDetails = dynamic(() => import('./watch-details').then(module => module.WatchDetails));
 const TradeEditor = dynamic(() => import('./trade-editor').then(module => module.TradeEditor));
 const RequestReview = dynamic(() => import('./request-review').then(module => module.RequestReview));
@@ -38,7 +39,7 @@ function RequestFunnel() {
     useEffect(() => { if (ready) {
         heading.current?.focus();
         track('private_request_step_viewed', { step: state.step + 1 });
-    } }, [state.step, ready, state.accepted]);
+    } }, [state.step, state.activeWatchId, ready, state.accepted]);
     function cancelAdvance() { if (advanceTimer.current) clearTimeout(advanceTimer.current); advanceTimer.current = null; }
     function scheduleAdvance(automatic: boolean) {
         cancelAdvance(); setError(''); setErrors({});
@@ -173,8 +174,9 @@ function RequestFunnel() {
     else
         next(); }}>
  <fieldset className="submission-fields" disabled={state.status === 'submitting'}><legend className="sr-only">Watch inquiry</legend>
- <div className="progress-meta"><span>{step.label}</span><span>{String(state.step + 1).padStart(2, '0')} / {String(steps.length).padStart(2, '0')}</span></div><progress className="sr-only" max={steps.length} value={state.step + 1} aria-label="Request progress"/><div className="progress-track" aria-hidden="true">{steps.map((item, i) => <i key={item.id} className={i < state.step ? "is-complete" : i === state.step ? "is-current" : ""}/>)}</div><p className="sr-only" aria-live="polite">Step {state.step + 1} of {steps.length}: {step.label}</p>
- <p className="draft-status">{draftStatus === "saved" ? "Saved in this tab." : draftStatus === "unavailable" ? "Draft saving is unavailable in this browser." : "Saving this draft…"}</p>{state.watches.length > 1 || watch.brand ? <div className="item-tabs" aria-label="Requested watches">{state.watches.map((w, i) => <div key={w.id}><button type="button" aria-pressed={w.id === state.activeWatchId} onClick={() => { dispatch({ type: 'watch/switch', id: w.id }); dispatch({ type: 'navigate', step: 1 }); setError(''); }}>Watch {i + 1}{w.brand ? ` · ${w.brand}` : ''}{w.model && w.model !== 'Open to guidance' ? ` ${w.model}` : w.model ? ' · Guidance' : ''}</button>{state.watches.length > 1 ? <button className="remove" aria-label={`Remove watch ${i + 1}`} type="button" onClick={() => dispatch({ type: 'watch/remove', id: w.id })}>×</button> : null}</div>)}</div> : null}
+ <div className="request-navigation"><button type="button" className="quiet-button" disabled={state.step === 0} onClick={() => { cancelAdvance(); setError(''); setErrors({}); setDirection('back'); dispatch({ type: 'navigation/start' }); }}>← Step 1 · Brand</button><span className="helper">Your details stay saved</span></div><div className="progress-meta"><span>{step.label}</span><span>{String(state.step + 1).padStart(2, '0')} / {String(steps.length).padStart(2, '0')}</span></div><progress className="sr-only" max={steps.length} value={state.step + 1} aria-label="Request progress"/><div className="progress-track" aria-hidden="true">{steps.map((item, i) => <i key={item.id} className={i < state.step ? "is-complete" : i === state.step ? "is-current" : ""}/>)}</div><p className="sr-only" aria-live="polite">Step {state.step + 1} of {steps.length}: {step.label}</p>
+ <p className="draft-status">{draftStatus === "saved" ? "Saved in this tab." : draftStatus === "unavailable" ? "Draft saving is unavailable in this browser." : "Saving this draft…"}</p><WatchRequests onNavigate={() => { cancelAdvance(); setError(''); setErrors({}); setDirection('back'); }}/>
+
  {step.id === "trade" || step.id === "review" ? <button className="add-watch-button" type="button" disabled={state.watches.length >= config.maxWatches} onClick={() => { cancelAdvance(); dispatch({ type: "watch/add", id: crypto.randomUUID() }); }}>Add another requested watch</button> : null}
  <div className="step-content" data-direction={direction} key={`${state.step}-${state.activeWatchId}`}><h2 ref={heading} tabIndex={-1}>{step.title}</h2>
  {step.id === 'brand' ? <><Choices label="Watch brand" variant="brand" automatic options={[...Object.keys(brandProfiles), 'Other']} value={Object.hasOwn(brandProfiles, watch.brand) ? watch.brand : watch.brand ? 'Other' : ''} onChange={(brand, automatic) => { update({ brand }); scheduleAdvance(automatic && brand !== "Other"); }}/>{watch.brand && !Object.hasOwn(brandProfiles, watch.brand) ? <Field label="Brand name" required value={watch.brand === 'Other' ? '' : watch.brand} onChange={brand => update({ brand })}/> : null}</> : null}
