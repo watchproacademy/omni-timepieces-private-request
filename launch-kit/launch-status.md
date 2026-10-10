@@ -1,5 +1,9 @@
 # Omni Google Ads launch status
 
+## October 9 — paused at owner's request
+
+Owner explicitly confirmed pausing the Omni Google Ads campaign in voice. Campaign 24316771577 was set to Paused and verified in the live Google Ads header. Do not resume without a new user instruction. Screenshot: campaign-paused-oct9.png. Existing campaign budget and schedule retained; pausing stops new delivery. Historical charges may still settle.
+
 Updated October 5, 2026. Revised campaign enabled. The October 5 update below supersedes the original launch settings and measurement status.
 
 ## October 5 approved expansion
