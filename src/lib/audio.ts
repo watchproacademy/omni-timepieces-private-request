@@ -17,7 +17,18 @@ export class ConciergeAudio {
             this.master.gain.value = this.volume;
             this.master.connect(this.context.destination);
         }
-        await this.context.resume();
+        // Some devices leave resume pending indefinitely when audio is unavailable.
+        // Bound startup and invalidate this attempt so a late resume cannot play.
+        let timeout: ReturnType<typeof setTimeout> | undefined;
+        try {
+            await Promise.race([
+                this.context.resume(),
+                new Promise<never>((_, reject) => { timeout = setTimeout(() => reject(new Error('Audio startup timed out.')), 4000); }),
+            ]);
+        } catch (error) {
+            if (generation === this.generation) this.disable();
+            throw error;
+        } finally { clearTimeout(timeout); }
         if (this.context.state !== 'running') throw new Error('Audio could not start.');
         if (generation !== this.generation) return;
         this.enabled = true;

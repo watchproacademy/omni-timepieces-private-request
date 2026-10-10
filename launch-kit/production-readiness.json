@@ -1,0 +1,31 @@
+{
+  "verifiedAt": "2026-10-10",
+  "status": "staged-not-promoted",
+  "productionDatabase": {"project": "plain-rain-52397004", "plan": "free", "migration": "001_inquiries.sql"},
+  "previewDatabase": {"project": "young-paper-48727752", "plan": "free", "migration": "001_inquiries.sql"},
+  "configuration": {
+    "ownerAndAlerts": "omnitimepieces@gmail.com",
+    "databaseConnections": "Separate pooled Neon URLs for production and preview; use the returned URI unchanged",
+    "secrets": "Server-only Vercel environment values; independent cron and abuse secrets per environment",
+    "email": "Existing Resend key and sender preserved; explicitly authorized for protected preview",
+    "previewDefault": "Demo acceptance; real email test used a deployment-specific override",
+    "productionDemoMode": false,
+    "automaticCustomDomainAssignment": false
+  },
+  "verification": {
+    "preview": "Nine-step browser inquiry accepted, one database record and two queue jobs sent on first attempt; owner confirmed both messages",
+    "production": "HTTP 202 accepted, one database record and two queue jobs sent on first attempt; owner confirmed both messages",
+    "idempotency": "Preview replay returned HTTP 200 and the original request ID; one inquiry and two jobs, each still at one attempt",
+    "maintenanceUnauthenticated": 401,
+    "maintenanceAuthenticated": {"http": 200, "processed": 0, "failures": 0},
+    "credentials": "No credentials committed or disclosed"
+  },
+  "testedDeployment": "https://omni-timepieces-private-request-oqnno6zww-watch-pro-academy.vercel.app",
+  "rollbackDeployment": "dpl_38T3jVQNXWoLydMCfeCwBSfrA6xi",
+  "releaseRequirements": [
+    "All required CI checks passing on release commit",
+    "Promote the verified staged production build only after launch requirements are resolved"
+  ],
+  "hostingDecision": "Owner explicitly requested proceeding on current free plans after being informed that Vercel Hobby restricts commercial use. No billing changes or paid upgrades authorized or made; this does not establish commercial-use eligibility.",
+  "recovery": "Database outbox keeps pending jobs if queue publication fails. Authenticated /api/maintenance retries due jobs and applies 90-day app-data retention. Inspect failed/ambiguous delivery jobs and provider evidence before resending. Alerts go to the configured owner inbox."
+}

@@ -1,5 +1,17 @@
 import { test, expect } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
+test('a stalled audio device clears loading and offers a retry', async ({page}) => {
+    await page.addInitScript(() => { AudioContext.prototype.resume = () => new Promise<void>(() => {}); });
+    await page.goto('/');
+    const sound = page.getByRole('switch', {name:'Sound',exact:true});
+    await sound.click();
+    await expect(sound).toHaveAttribute('aria-busy','true');
+    await expect(page.getByRole('status')).toContainText('Sound could not start', {timeout:6000});
+    await expect(sound).toHaveAttribute('aria-checked','false');
+    await expect(sound).toHaveAttribute('aria-busy','false');
+    await sound.click();
+    await expect(sound).toHaveAttribute('aria-busy','true');
+});
 test('intro copy is server rendered and accessible in both themes', async ({page, request}) => {
     const html = await (await request.get('/')).text();
     expect(html).toContain('$100M+');
@@ -21,10 +33,12 @@ test('intro copy is server rendered and accessible in both themes', async ({page
 
 test('rapid sound toggles preserve the latest choice and hidden tabs stop the clock', async ({page}) => {
     await page.addInitScript(() => {
-        const evidence = { starts: 0 };
+        let release = () => {};
+        const gate = new Promise<void>(resolve => { release = resolve; });
+        const evidence = { starts: 0, release };
         Object.assign(window, { __clockEvidence: evidence });
         const resume = AudioContext.prototype.resume;
-        AudioContext.prototype.resume = async function () { await resume.call(this); await new Promise(resolve => setTimeout(resolve, 300)); };
+        AudioContext.prototype.resume = async function () { await resume.call(this); await gate; };
         const create = AudioContext.prototype.createBufferSource;
         AudioContext.prototype.createBufferSource = function () {
             const source = create.call(this); const start = source.start.bind(source);
@@ -36,6 +50,7 @@ test('rapid sound toggles preserve the latest choice and hidden tabs stop the cl
     const sound = page.getByRole('switch',{name:'Sound',exact:true});
     await sound.click(); await expect(sound).toHaveAttribute('aria-busy','true');
     await sound.click(); await sound.click();
+    await page.evaluate(() => (window as typeof window & {__clockEvidence:{release:()=>void}}).__clockEvidence.release());
     await expect(sound).toHaveAttribute('aria-checked','true');
     await expect.poll(()=>page.evaluate(()=>(window as typeof window & {__clockEvidence:{starts:number}}).__clockEvidence.starts)).toBeGreaterThanOrEqual(3);
     await page.evaluate(()=>{Object.defineProperty(document,'hidden',{configurable:true,value:true});document.dispatchEvent(new Event('visibilitychange'));});

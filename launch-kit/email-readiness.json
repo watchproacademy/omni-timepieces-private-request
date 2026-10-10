@@ -2,6 +2,11 @@
   "credentialPresent": true,
   "ownerConfigured": true,
   "senderConfigured": true,
-  "domainInspectionStatus": null,
-  "inspectionError": "Cannot inspect production Sensitive values through a local export. Prior invalid-key response used an export placeholder and is not evidence of a broken production key."
+  "verifiedAt": "2026-10-10",
+  "previewRequestId": "WR-20261010-A8C4CB4F-5283-4066-A6F9-152BC70D543D",
+  "productionRequestId": "WR-20261010-FF8E0586-9E2E-4F26-90B1-6EE2DE663143",
+  "ownerAndReceiptSent": true,
+  "ownerConfirmedBothEnvironmentsReceivedAndRendered": true,
+  "duplicateReplayCreatedExtraEmails": false,
+  "scope": "Controlled tests only, sent to the owner-approved inbox. Production deployment remains staged."
 }
