@@ -38,6 +38,9 @@ test('prefill, dependent model resets, and draft restoration preserve the active
  await page.evaluate(()=>history.replaceState(null,'','/'));await page.reload();const begin=page.getByRole('button',{name:'Let’s get started'});if(await begin.isVisible())await begin.click();await expect(page.getByLabel('Model',{exact:true})).toHaveValue('Datejust');
 });
 test('multiple watches and trades retain details and review edits return directly',async({page})=>{
+ // Two complete watches, two trades, and several review edits need a larger
+ // total budget on Linux WebKit; individual assertions keep their usual limit.
+ test.setTimeout(90000);
  await start(page);await watch(page);await page.getByRole('button',{name:'Add another requested watch'}).click();await watch(page,'Rolex','Datejust');await choose(page,'Yes',false);
  await page.getByLabel('Trade brand',{exact:true}).fill('Rolex');await page.getByLabel('Trade model',{exact:true}).fill('Submariner');await page.getByLabel('Trade condition',{exact:true}).selectOption('Good');await page.getByLabel('Trade presentation',{exact:true}).selectOption('Watch only');
  await page.getByRole('button',{name:'Add another trade-in'}).click();await page.getByLabel('Trade brand',{exact:true}).fill('Omega');await page.getByLabel('Trade model',{exact:true}).fill('Speedmaster');await page.getByLabel('Trade condition',{exact:true}).selectOption('Excellent');await page.getByLabel('Trade presentation',{exact:true}).selectOption('Watch only');await next(page);await contact(page);

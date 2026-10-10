@@ -9,6 +9,10 @@ jobs:
   checks:
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        browser: [chromium, firefox, webkit, mobile]
     env:
       WATCH_REQUEST_PREVIEW_MODE: 'true'
     steps:
@@ -25,18 +29,18 @@ jobs:
       - run: pnpm lint
       - run: pnpm test
       - run: pnpm build
-      - run: pnpm exec playwright install --with-deps chromium firefox webkit
+      - run: pnpm exec playwright install --with-deps ${{ matrix.browser == 'mobile' && 'webkit' || matrix.browser }}
       - name: Start virtual audio output for browser sound tests
         run: |
           sudo apt-get install -y pulseaudio
           pulseaudio --start --exit-idle-time=-1
           pactl load-module module-null-sink sink_name=browser_tests
           pactl set-default-sink browser_tests
-      - run: pnpm test:browser
+      - run: pnpm test:browser --project=${{ matrix.browser }}
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         if: failure()
         with:
-          name: browser-failure-report
+          name: browser-failure-report-${{ matrix.browser }}
           path: |
             playwright-report/
             test-results/
