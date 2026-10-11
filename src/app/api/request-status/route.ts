@@ -1,3 +1,4 @@
+import {allowsAdmin,internalPortalOrigin} from '@/lib/server/admin-boundary';
 import { z } from 'zod';
 import { database } from '@/lib/server/db';
 import { fingerprint } from '@/lib/server/repository';
@@ -42,7 +43,7 @@ export async function POST(request:Request) {
  try{
  if(input.action==='login'){
  const parsed=login.safeParse(input);if(!parsed.success)return reply({message:'Enter a valid email and request reference.'},400);
- const v=parsed.data;const email=v.email.toLowerCase().trim();const ip=process.env.VERCEL?request.headers.get('x-vercel-forwarded-for')?.split(',')[0]||'unknown':'local';
+ const v=parsed.data;if(v.role==='owner'&&!allowsAdmin(request))return reply({message:'Not found.'},404);const email=v.email.toLowerCase().trim();const ip=process.env.VERCEL?request.headers.get('x-vercel-forwarded-for')?.split(',')[0]||'unknown':'local';
  if(!await throttle('ip:'+ip,20)||!await throttle('email:'+email,3))return reply({message:'Please wait before requesting another link.'},429);
  const owner=process.env.TRACKING_OWNER_EMAIL?.toLowerCase().trim();
  const normalized=v.requestId.trim().toUpperCase().replace(/[\s-]/g,'');
@@ -50,7 +51,7 @@ export async function POST(request:Request) {
  const matches=v.role==='owner'?email===owner:!!matched;
  if(matches){
  const token=await issueAccess(v.role,v.role==='owner'?null:matched!.id);
- const link=`${process.env.TRACKING_SITE_URL || config.siteUrl}/request-status#access=${token}`;
+ const link=`${v.role==='owner'?internalPortalOrigin():process.env.TRACKING_SITE_URL || config.siteUrl}/${v.role==='owner'?'private-desk':'request-status'}#access=${token}`;
  const result=await fetch('https://api.resend.com/emails',{method:'POST',headers:{Authorization:`Bearer ${process.env.RESEND_API_KEY}`,'Content-Type':'application/json','Idempotency-Key':'tracking:'+tokenHash(token)},body:JSON.stringify({from:process.env.WATCH_REQUEST_FROM_EMAIL,to:[email],subject:'Your private Omni request access',text:`Open your private request page: ${link}\n\nThis one-use link expires in 15 minutes. Keep it private. If you did not request this link, ignore this email.`}),signal:AbortSignal.timeout(10000)});
  if(!result.ok)throw new Error('email unavailable');
  }
@@ -58,7 +59,7 @@ export async function POST(request:Request) {
  }
  if(input.action==='exchange'){
  if(!await throttle('exchange:'+(process.env.VERCEL?request.headers.get('x-vercel-forwarded-for')||'unknown':'local'),30))return reply({message:'Please try later.'},429);
- const access=await consumeAccess(String(input.token||''));if(!access)return reply({message:'This link expired or was already used. Request another link.'},401);
+ const access=await consumeAccess(String(input.token||''),request);if(!access)return reply({message:'This link expired or was already used. Request another link.'},401);
  const session=await issueAccess(access.role,access.inquiry_id,true);
  return reply({ok:true},200,{'Set-Cookie':`${trackingCookie}=${session}; Path=/api/request-status; HttpOnly; SameSite=Strict; Max-Age=3600${process.env.NODE_ENV==='production'?'; Secure':''}`});
  }

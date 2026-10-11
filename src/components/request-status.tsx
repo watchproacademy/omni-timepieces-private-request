@@ -1,4 +1,5 @@
 'use client';
+import {AdminRequestList} from './admin-request-list';
 import {AdminPasskey} from './admin-passkey';
 import {RequestProgress} from './request-progress';
 import { useCallback,useEffect,useState } from 'react';
@@ -14,9 +15,9 @@ export function RequestStatus({enabled,portal=false,initialRole='customer'}:{ena
  const [view,setView]=useState<RequestView|null>(null);const [list,setList]=useState<{id:string;reference?:string;brand:string;model:string;name?:string}[]>([]);const [search,setSearch]=useState('');
  const load=useCallback(async(id?:string)=>{
   const response=await fetch((portal?'/api/request-status/portal':'/api/request-status')+(id?'?id='+encodeURIComponent(id):''),{cache:'no-store'});const data=await response.json();
-  if(response.status===401){setSignedIn(false);setView(null);setPortalView(null);setList([]);const verification=await fetch('/api/request-status/admin',{cache:'no-store'});if(verification.ok){const state=await verification.json();setMfa(state.required?{enrolled:state.enrolled}:null);}else setMfa(null);return;}
+  if(response.status===401){setSignedIn(false);setView(null);setPortalView(null);setList([]);if(initialRole!=='owner'){setMfa(null);return;}const verification=await fetch('/api/request-status/admin',{cache:'no-store'});if(verification.ok){const state=await verification.json();setMfa(state.required?{enrolled:state.enrolled}:null);}else setMfa(null);return;}
   if(!response.ok)throw new Error(data.message);setMfa(null);setSignedIn(true);setRole(data.role);setView(data.request||null);setPortalView(portal?data.request||null:null);setList(data.requests||[]);
- },[portal]);
+ },[portal,initialRole]);
  useEffect(()=>{if(!enabled)return;const frame=requestAnimationFrame(()=>{const access=new URLSearchParams(window.location.hash.slice(1)).get('access');if(access){setToken(access);history.replaceState(null,'',window.location.pathname);}else{void load().catch(error=>setMessage(error.message));}});return ()=>cancelAnimationFrame(frame);},[enabled,load]);
  if(!enabled)return <p>Request tracking is being prepared. For an update, please reply to your confirmation email and include your request reference.</p>;
  async function run(action:()=>Promise<void>){setBusy(true);setMessage('');try{await action();}catch(error){setMessage(error instanceof Error?error.message:'Please try again.');}finally{setBusy(false);}}
@@ -27,7 +28,6 @@ export function RequestStatus({enabled,portal=false,initialRole='customer'}:{ena
  {role==='customer'?<label>Request reference<input name="requestId" required maxLength={100} placeholder="OMNI-WR20261010-BX0001-RLXQFPU" autoCapitalize="characters"/></label>:null}
  <label>Email<input name="email" type="email" autoComplete="email" required maxLength={254}/></label>
  <button className="primary" disabled={busy}>{busy?'Please wait…':'Email my private link'}</button>
- <button type="button" className="tracking-owner-link" onClick={()=>{setRole(role==='owner'?'customer':'owner');setMessage('');}}>{role==='owner'?'Customer request access':'Private desk sign-in'}</button>
  </form>:<>
  <div className="tracking-toolbar"><button disabled={busy} onClick={()=>void run(()=>load(view?.id))}>Refresh updates</button>{role==='owner'&&view?<button onClick={()=>void run(()=>load())}>All requests</button>:null}<button onClick={()=>void run(async()=>{await post({action:'logout'});setSignedIn(false);setMfa(null);setView(null);setPortalView(null);setList([]);})}>Sign out</button></div>
  {role==='owner'?<details className="portal-section"><summary>Admin security</summary><AdminPasskey enrolled backup onVerified={async()=>{}}/></details>:null}
@@ -35,7 +35,7 @@ export function RequestStatus({enabled,portal=false,initialRole='customer'}:{ena
  <RequestProgress title={watch.title} stage={watch.stage} stages={trackingStages} labels={stageLabels}/>
  {watch.note?<p>{watch.note}</p>:null}{watch.linked?<p className="tracking-sync">{watch.stale?'Shopify could not refresh. Displaying the last available update; please retry.':watch.checkedAt?`Shopify checked ${new Date(watch.checkedAt).toLocaleString()}`:'Waiting for Shopify confirmation.'}</p>:null}
  {watch.tracking.map((tracking,index)=><p key={index}>{tracking.url?<a href={tracking.url} target="_blank" rel="noreferrer">Track shipment · {tracking.company||'Carrier'} {tracking.number}</a>:<span>{tracking.company} {tracking.number}</span>}</p>)}
- {role==='owner'?<WatchUpdate key={watch.id+':'+watch.version} requestId={view.id} watch={watch} onSaved={()=>load(view.id)}/>:null}</article>)}</>:<><h2>Recent requests</h2>{portal?<label>Find a request<input type="search" value={search} onChange={event=>setSearch(event.target.value)} placeholder="Customer, watch, or request reference"/></label>:null}{list.length?list.filter(item=>!search||[item.reference,item.id,item.brand,item.model,item.name].join(' ').toLowerCase().includes(search.toLowerCase())).map(item=><button className="tracking-request" key={item.id} onClick={()=>void run(()=>load(item.id))}><strong>{item.name?`${item.name} · `:''}{item.brand} {item.model}</strong><span>{item.reference || item.id}</span></button>):<p>No active requests.</p>}</>}
+ {role==='owner'?<WatchUpdate key={watch.id+':'+watch.version} requestId={view.id} watch={watch} onSaved={()=>load(view.id)}/>:null}</article>)}</>:portal&&role==='owner'?<AdminRequestList onSelect={id=>void run(()=>load(id))}/>:<><h2>Recent requests</h2>{portal?<label>Find a request<input type="search" value={search} onChange={event=>setSearch(event.target.value)} placeholder="Customer, watch, or request reference"/></label>:null}{list.length?list.filter(item=>!search||[item.reference,item.id,item.brand,item.model,item.name].join(' ').toLowerCase().includes(search.toLowerCase())).map(item=><button className="tracking-request" key={item.id} onClick={()=>void run(()=>load(item.id))}><strong>{item.name?`${item.name} · `:''}{item.brand} {item.model}</strong><span>{item.reference || item.id}</span></button>):<p>No active requests.</p>}</>}
  </>}
  </div>;
 }

@@ -21,3 +21,4 @@
 .request-progress-details li[aria-current=step]{font-weight:600}
 .request-progress-details li[data-reached=true] span{color:var(--accent)}
 @media(prefers-reduced-motion:reduce){.request-progress-fill{transition:none}}
+.admin-filters{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:var(--space-4);margin-block:var(--space-5)}.admin-filters label{display:grid;gap:var(--space-2)}.admin-filters label:first-child{grid-column:1/-1}.admin-filters button{align-self:end}@media(max-width:540px){.admin-filters{grid-template-columns:1fr}}

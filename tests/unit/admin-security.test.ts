@@ -43,9 +43,9 @@ test('unscanned retained files block approval and shipping at the database bound
  }finally{await db.close();}
 });
 
-test('admin endpoints reject missing sessions and cross-origin operations',async()=>{
+test('public deployment does not expose admin endpoints',async()=>{
  const {GET,POST}=await import('../../src/app/api/request-status/admin/route');
- assert.equal((await GET(new Request('https://example.com/api/request-status/admin'))).status,401);
- assert.equal((await POST(new Request('https://example.com/api/request-status/admin',{method:'POST',headers:{origin:'https://evil.example','content-type':'application/json'},body:'{"action":"options"}'}))).status,403);
- assert.equal((await POST(new Request('https://example.com/api/request-status/admin',{method:'POST',headers:{origin:'https://example.com','content-type':'application/json'},body:'{"action":"options"}'}))).status,401);
+ assert.equal((await GET(new Request('https://example.com/api/request-status/admin'))).status,404);
+ assert.equal((await POST(new Request('https://example.com/api/request-status/admin',{method:'POST',headers:{origin:'https://evil.example','content-type':'application/json'},body:'{"action":"options"}'}))).status,404);
+ assert.equal((await POST(new Request('https://example.com/api/request-status/admin',{method:'POST',headers:{origin:'https://example.com','content-type':'application/json'},body:'{"action":"options"}'}))).status,404);
 });

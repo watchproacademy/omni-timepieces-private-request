@@ -11,7 +11,7 @@ test('customer dashboard exposes requested documents and messages, without opera
  await expect(page.getByText('Internal operator note only')).toHaveCount(0);
 });
 test('operator can independently record shipping and internal notes',async({page})=>{
- test.skip(process.env.REQUEST_PORTAL_ENABLED!=='true');let update:Record<string,unknown>|undefined;
+ test.skip(process.env.REQUEST_PORTAL_ENABLED!=='true'||process.env.OMNI_PORTAL_MODE!=='internal','Requires the separately protected internal deployment');let update:Record<string,unknown>|undefined;
  await page.route('**/api/request-status/portal**',async route=>{if(route.request().method()==='POST'){update=route.request().postDataJSON();await route.fulfill({json:{ok:true}});}else await route.fulfill({json:{role:'owner',request:{...record,review:{...record.review,state:'approved'}}}});});
  await page.goto('/private-desk');await page.getByLabel('Update stage').selectOption('shipped');await page.getByText('Shipping details',{exact:true}).click();
  await page.getByLabel('Carrier',{exact:true}).fill('UPS');await page.getByLabel('Tracking number',{exact:true}).fill('SYNTHETIC-123');
@@ -54,11 +54,21 @@ test('linear progress advances per watch and handles completion and paused reque
  stage='cancelled';await page.getByRole('button',{name:'Refresh updates'}).click();await expect(page.getByText('Request cancelled',{exact:true})).toBeVisible();await expect(progress).toHaveCount(0);
 });
 
-test('email-only admin session must complete the passkey gate before seeing requests',async({page})=>{
- test.skip(process.env.REQUEST_PORTAL_ENABLED!=='true');
+test('public customer portal exposes no operator entry point',async({page})=>{
+ test.skip(process.env.OMNI_PORTAL_MODE==='internal');
  await page.route('**/api/request-status/portal**',route=>route.fulfill({status:401,json:{message:'Sign in'}}));
- await page.route('**/api/request-status/admin',route=>route.fulfill({json:{required:true,enrolled:true}}));
- await page.goto('/private-desk');await expect(page.getByRole('button',{name:'Verify with passkey'})).toBeVisible();
- await expect(page.getByRole('heading',{name:'Recent requests'})).toHaveCount(0);
- await expect(page.getByLabel('Update stage')).toHaveCount(0);
+ await page.route('**/api/request-status',route=>route.fulfill({status:401,json:{message:'Sign in'}}));
+ await page.goto('/request-status');
+ await expect(page.getByLabel('Request reference')).toBeVisible();
+ await expect(page.getByRole('button',{name:'Private desk sign-in'})).toHaveCount(0);
+ const response=await page.goto('/private-desk');expect(response?.status()).toBe(404);
+ await expect(page.getByRole('button',{name:'Email my private link'})).toHaveCount(0);
+});
+
+test('operator filters dates, stages and attention on the server',async({page})=>{
+ test.skip(process.env.OMNI_PORTAL_MODE!=='internal');
+ let last='';await page.route('**/api/request-status/portal**',async route=>{last=route.request().url();await route.fulfill({json:{role:'owner',requests:[{id:'test',reference:'OMNI-TEST',name:'Test customer',brand:'Rolex',model:'Daytona',created_at:'2026-10-11T02:00:00Z',stages:['invoice_sent']}],total:51,page:new URL(last).searchParams.get('page')==='2'?2:1,pageSize:50}});});
+ await page.goto('/private-desk');await expect(page.getByText('51 matching requests')).toBeVisible();
+ await page.getByLabel('Date received').selectOption('fortnight');await page.getByRole('combobox',{name:'Stage',exact:true}).selectOption('invoice_sent');await page.getByLabel('Needs attention').selectOption('unpaid');await page.getByRole('button',{name:'Apply filters'}).click();
+ await expect.poll(()=>last).toContain('period=fortnight');await expect.poll(()=>last).toContain('attention=unpaid');await expect(page.getByText('51 matching requests')).toBeVisible();await page.getByRole('button',{name:'Next',exact:true}).click();await expect.poll(()=>last).toContain('page=2');
 });

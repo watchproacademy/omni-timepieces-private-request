@@ -1,3 +1,4 @@
+import {allowsAdmin,internalPortalOrigin} from '@/lib/server/admin-boundary';
 import {randomBytes} from 'node:crypto';
 import {generateRegistrationOptions,generateAuthenticationOptions,verifyRegistrationResponse,verifyAuthenticationResponse,type RegistrationResponseJSON,type AuthenticationResponseJSON} from '@simplewebauthn/server';
 import {database} from '@/lib/server/db';
@@ -5,11 +6,12 @@ import {pendingAccessFor,sessionToken,tokenHash,trackingCookie} from '@/lib/serv
 import {checkOrigin,limitedBody,portalReply,portalLimit} from '@/lib/server/portal';
 export const runtime='nodejs';
 function relyingParty(){
- const site=new URL(process.env.TRACKING_SITE_URL||'https://concierge.omnitimepieces.com');
+ const site=new URL(internalPortalOrigin()||'https://invalid.invalid');
  if(site.protocol!=='https:'&&!(process.env.NODE_ENV!=='production'&&site.hostname==='localhost'))throw new Error('Invalid passkey origin');
  return {rpID:site.hostname,origin:site.origin};
 }
 export async function GET(request:Request){
+ if(!allowsAdmin(request))return portalReply({message:'Not found.'},404);
  try{
  const access=await pendingAccessFor(request);if(!access||access.role!=='owner')return portalReply({message:'Please sign in with your private email link.'},401);
  const {rpID}=relyingParty(),owner=process.env.TRACKING_OWNER_EMAIL?.trim().toLowerCase();
@@ -18,6 +20,7 @@ export async function GET(request:Request){
  }catch{return portalReply({message:'Admin verification is unavailable.'},503);}
 }
 export async function POST(request:Request){
+ if(!allowsAdmin(request))return portalReply({message:'Not found.'},404);
  try{
  checkOrigin(request);
  if(!request.headers.get('content-type')?.startsWith('application/json'))throw new Error();
