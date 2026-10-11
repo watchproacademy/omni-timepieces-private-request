@@ -50,3 +50,33 @@ test('dated references use Miami days, ordered counters, aliases and stable retr
  assert.deepEqual((await db.query("SELECT public_reference FROM inquiries WHERE id='stable'")).rows,stable);
  }finally{await db.close();}
 });
+
+test('reference tiers sum watch budgets, mark unknown ranges, preserve aliases and stay frozen',async()=>{
+ const db=new PGlite();try{
+ for(const file of ['001_inquiries.sql','004_request_references.sql','005_dated_request_references.sql']) await db.exec(await readFile('migrations/'+file,'utf8'));
+ const payload=fixture();payload.watches[0].budget='$15,000–$30,000';payload.watches.push({...payload.watches[0],id:'second'});
+ await db.query("INSERT INTO inquiries(id,idempotency_key,payload_hash,payload) VALUES('tier','tier','hash',$1::jsonb)",[JSON.stringify(payload)]);
+ const old=(await db.query<{public_reference:string}>("SELECT public_reference FROM inquiries WHERE id='tier'")).rows[0].public_reference;
+ const migration=await readFile('migrations/006_request_reference_tiers.sql','utf8');await db.exec(migration);
+ const reference=async()=>(await db.query<{public_reference:string}>("SELECT public_reference FROM inquiries WHERE id='tier'")).rows[0].public_reference;
+ assert.equal(await reference(),old.replace(/-(\d{4,})-/,'-BX$1-'));
+ assert.equal((await db.query('SELECT reference FROM request_reference_aliases WHERE reference=$1',[old])).rows.length,1);
+ const classify=async(watches:unknown[])=>(await db.query<{tier:string}>('SELECT request_reference_classification($1::jsonb) AS tier',[JSON.stringify({watches})])).rows[0].tier;
+ const exact=(amount:number)=>({budget:'Custom',budgetMin:amount,budgetMax:amount});
+ for(const [amount,tier] of [[14999.99,'A'],[15000,'B'],[99999.99,'B'],[100000,'C'],[499999.99,'C'],[500000,'D'],[1000000,'D'],[1000000.01,'E']] as const) assert.equal(await classify([exact(amount)]),tier);
+ assert.equal(await classify([{budget:'Under $15,000'}]),'A');
+ assert.equal(await classify([{budget:'$60,000–$100,000'}]),'U');
+ assert.equal(await classify([{budget:'$250,000+'}]),'U');
+ assert.equal(await classify([{budget:'Flexible'},exact(20000)]),'UX');
+ assert.equal(await classify([exact(10000),exact(10000)]),'BX');
+ assert.equal(await classify([{budget:'Custom',budgetMin:14000,budgetMax:16000}]),'U');
+ assert.equal(await classify([{budget:'Custom',budgetMax:'bad'}]),'U');
+ assert.equal(await classify([]),'U');
+ const saved=await reference();
+ await db.exec("UPDATE inquiries SET payload='{}'::jsonb WHERE id='tier'");
+ await db.exec(await readFile('migrations/005_dated_request_references.sql','utf8'));await db.exec(migration);
+ assert.equal(await reference(),saved);
+ await db.query("INSERT INTO inquiries(id,idempotency_key,payload_hash,payload) VALUES('new-tier','new-tier','hash',$1::jsonb)",[JSON.stringify({watches:[exact(20000)]})]);
+ assert.match((await db.query<{public_reference:string}>("SELECT public_reference FROM inquiries WHERE id='new-tier'")).rows[0].public_reference,/^OMNI-WR\d{8}-B\d{4,}-[A-Z]{4}$/);
+ }finally{await db.close();}
+});

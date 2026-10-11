@@ -35,7 +35,7 @@ BEGIN
  -- Prevent new inserts from interleaving with chronological backfill.
  LOCK TABLE inquiries IN SHARE ROW EXCLUSIVE MODE;
  FOR inquiry IN SELECT id,public_reference,created_at FROM inquiries
- WHERE public_reference !~ '^OMNI-WR[0-9]{8}-[0-9]{4,}-[A-Z]{4}$' ORDER BY created_at,id LOOP
+ WHERE public_reference !~ '^OMNI-WR[0-9]{8}-([ABCDEU]X?)?[0-9]{4,}-[A-Z]{4}$' ORDER BY created_at,id LOOP
   INSERT INTO request_reference_aliases VALUES(inquiry.public_reference,inquiry.id) ON CONFLICT DO NOTHING;
   UPDATE inquiries SET public_reference=dated_request_reference(inquiry.created_at) WHERE id=inquiry.id;
  END LOOP;

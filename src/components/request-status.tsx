@@ -21,7 +21,7 @@ export function RequestStatus({enabled,portal=false,initialRole='customer'}:{ena
  {message?<p role="status" className="tracking-message">{message}</p>:null}
  {token?<><p>Your private link is ready. Open it to view your request.</p><button className="primary" disabled={busy} onClick={()=>void run(async()=>{await post({action:'exchange',token});setToken('');await load();})}>Open private request</button><button onClick={()=>setToken('')}>Request a new link</button></>:!signedIn?<form className="tracking-login" onSubmit={event=>{event.preventDefault();const form=new FormData(event.currentTarget);void run(async()=>{const result=await post({action:'login',role,email:form.get('email'),requestId:form.get('requestId')||''});setMessage(result.message);});}}>
  <p>{role==='owner'?'Sign in to manage sourcing, quotes, and linked orders.':'Enter the reference from your confirmation email. We’ll send a private link to the email used for your request.'}</p>
- {role==='customer'?<label>Request reference<input name="requestId" required maxLength={100} placeholder="OMNI-WR20261010-0001-QFPU" autoCapitalize="characters"/></label>:null}
+ {role==='customer'?<label>Request reference<input name="requestId" required maxLength={100} placeholder="OMNI-WR20261010-BX0001-QFPU" autoCapitalize="characters"/></label>:null}
  <label>Email<input name="email" type="email" autoComplete="email" required maxLength={254}/></label>
  <button className="primary" disabled={busy}>{busy?'Please wait…':'Email my private link'}</button>
  <button type="button" className="tracking-owner-link" onClick={()=>{setRole(role==='owner'?'customer':'owner');setMessage('');}}>{role==='owner'?'Customer request access':'Private desk sign-in'}</button>
