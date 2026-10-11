@@ -1,6 +1,6 @@
 # Admin passkeys and private malware scanning
 
-Migration 008 is required before deploying this release. It adds passkey public keys, expiring challenges and enrollment hashes, an admin security audit, and file scan results. Existing owner sessions must sign in again. Customer email-link access is unchanged.
+Migrations 008 and 009 are required before deploying this release. It adds passkey public keys, expiring challenges and enrollment hashes, an admin security audit, and file scan results. Existing owner sessions must sign in again. Customer email-link access is unchanged.
 
 ## Admin authentication
 
@@ -16,6 +16,6 @@ Set server-only `CLOUDMERSIVE_API_KEY` in protected Preview and Production separ
 
 Uploads accept only the existing PDF/JPEG/PNG signatures and 3 MB maximum. The scanner must return HTTP success and boolean `CleanResult: true` within 20 seconds before storage. Quota failures, errors, malformed answers, and timeouts fail closed. Rejected uploads are not stored. Scanning is a defense, not a guarantee that every threat is detectable.
 
-Legacy private files are marked unscanned by migration 008. Their first authorized download scans the bytes before any are returned. A threat sets the scan state to blocked; scanner failure leaves it unscanned. Database triggers prevent submission/approval and shipping while active, ready identity/address/business files are unscanned or blocked. Open each legacy document and refresh before approval. There is no bypass button. Existing infected legacy records remain private under the retention policy and require controlled handling; they cannot be downloaded.
+Legacy private files are marked unscanned by migration 008. Their first authorized download scans the bytes before any are returned. A threat sets the scan state to blocked; scanner failure leaves it unscanned. Database triggers prevent submission/approval and shipping while active, ready identity/address/business files remain unscanned or a required document type lacks a clean file. A blocked legacy file cannot satisfy a requirement; a clean replacement can. Open each legacy document and refresh before approval. There is no bypass button. Existing infected legacy records remain private under the retention policy and require controlled handling; they cannot be downloaded.
 
 Before launch: configure the provider key, test one harmless clean fixture and EICAR test fixture, enroll the operator on their own device, verify a fresh email + passkey login, register a backup, and test direct endpoint denial using an email-only session. No real customer identity documents are needed for testing. Independent security review and final document-retention policy remain release requirements.

@@ -5,7 +5,7 @@ import {PGlite} from '@electric-sql/pglite';
 
 test('admin enrollment is one-time, sessions rotate, and email-only sessions cannot add backup keys',async()=>{
  const db=new PGlite();try{
- for(const file of ['001_inquiries.sql','002_tracking.sql','003_portal.sql','008_admin_passkeys_and_scans.sql']) await db.exec(await readFile('migrations/'+file,'utf8'));
+ for(const file of ['001_inquiries.sql','002_tracking.sql','003_portal.sql','008_admin_passkeys_and_scans.sql','009_scan_replacements.sql']) await db.exec(await readFile('migrations/'+file,'utf8'));
  await db.exec(await readFile('migrations/008_admin_passkeys_and_scans.sql','utf8'));
  const session=async(id:string)=>db.query("INSERT INTO tracking_access(token_hash,role,owner_email,session,expires_at) VALUES($1,'owner','owner@example.com',true,now()+interval '1 hour')",[id]);
  await session('email-only');await session('attacker-email-only');
@@ -27,7 +27,7 @@ test('admin enrollment is one-time, sessions rotate, and email-only sessions can
 
 test('unscanned retained files block approval and shipping at the database boundary',async()=>{
  const db=new PGlite();try{
- for(const file of ['001_inquiries.sql','002_tracking.sql','003_portal.sql','008_admin_passkeys_and_scans.sql'])await db.exec(await readFile('migrations/'+file,'utf8'));
+ for(const file of ['001_inquiries.sql','002_tracking.sql','003_portal.sql','008_admin_passkeys_and_scans.sql','009_scan_replacements.sql'])await db.exec(await readFile('migrations/'+file,'utf8'));
  await db.exec("INSERT INTO inquiries(id,idempotency_key,payload_hash,payload) VALUES('i','i','h','{}')");
  await db.exec("INSERT INTO request_files(id,inquiry_id,kind,pathname,mime,size,state,expires_at) VALUES('f','i','identity','private/f','application/pdf',10,'ready',now()+interval '1 year')");
  await assert.rejects(db.exec("INSERT INTO request_reviews(inquiry_id,state) VALUES('i','approved')"),/SCAN_REQUIRED/);
@@ -35,6 +35,11 @@ test('unscanned retained files block approval and shipping at the database bound
  await db.exec("UPDATE request_files SET scan_status='clean' WHERE id='f'");
  await db.exec("INSERT INTO request_reviews(inquiry_id,state) VALUES('i','approved')");
  await db.exec("INSERT INTO watch_progress(inquiry_id,watch_id,stage) VALUES('i','w','shipped')");
+ await db.exec("UPDATE request_files SET scan_status='blocked' WHERE id='f'");
+ await assert.rejects(db.exec("UPDATE request_reviews SET state='approved' WHERE inquiry_id='i'"),/SCAN_REQUIRED/);
+ await db.exec("INSERT INTO request_files(id,inquiry_id,kind,pathname,mime,size,state,expires_at,scan_status) VALUES('replacement','i','identity','private/replacement','application/pdf',10,'ready',now()+interval '1 year','clean')");
+ await db.exec("UPDATE request_reviews SET state='approved' WHERE inquiry_id='i'");
+ await db.exec("UPDATE watch_progress SET stage='shipped' WHERE inquiry_id='i'");
  }finally{await db.close();}
 });
 
