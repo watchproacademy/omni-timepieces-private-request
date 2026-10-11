@@ -46,7 +46,7 @@ export async function POST(request:Request) {
  if(!await throttle('ip:'+ip,20)||!await throttle('email:'+email,3))return reply({message:'Please wait before requesting another link.'},429);
  const owner=process.env.TRACKING_OWNER_EMAIL?.toLowerCase().trim();
  const normalized=v.requestId.trim().toUpperCase().replace(/[\s-]/g,'');
- const matched=v.role==='customer'?(await database().query(`SELECT id FROM inquiries WHERE (id=$1 OR replace(public_reference,'-','')=$3) AND lower(payload->'contact'->>'email')=$2 AND ${process.env.REQUEST_PORTAL_ENABLED==='true'?"COALESCE(retention_until,created_at+interval '1 year')>now()":"created_at>now()-interval '90 days'"}`,[v.requestId.trim().toUpperCase(),email,normalized]))[0]:null;
+ const matched=v.role==='customer'?(await database().query(`SELECT id FROM inquiries WHERE (id=$1 OR replace(public_reference,'-','')=$3 OR EXISTS(SELECT 1 FROM request_reference_aliases aliases WHERE aliases.inquiry_id=inquiries.id AND replace(aliases.reference,'-','')=$3)) AND lower(payload->'contact'->>'email')=$2 AND ${process.env.REQUEST_PORTAL_ENABLED==='true'?"COALESCE(retention_until,created_at+interval '1 year')>now()":"created_at>now()-interval '90 days'"}`,[v.requestId.trim().toUpperCase(),email,normalized]))[0]:null;
  const matches=v.role==='owner'?email===owner:!!matched;
  if(matches){
  const token=await issueAccess(v.role,v.role==='owner'?null:matched!.id);
