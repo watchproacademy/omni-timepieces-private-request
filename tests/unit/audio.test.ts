@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { ConciergeAudio } from '../../src/lib/audio';
 
-test('audio recovery skips missed contacts on the original beat grid and cancels queued sources', async () => {
+test('ambience recovery skips missed chords without bursts and cancels queued sources', async () => {
     const starts: { time: number; buffer: unknown; stopped: boolean }[] = [];
     class Device {
         state = 'suspended';
@@ -35,16 +35,16 @@ test('audio recovery skips missed contacts on the original beat grid and cancels
         assert.equal(starts.length, 1);
         assert.equal(starts[0].time, .015);
         // Reproduce a startup clock jump, then a longer foreground JS stall.
-        for (const now of [.846, 1.61]) {
+        for (const now of [7.9, 15.9]) {
             scheduler.context.currentTime = now;
             const before: number = starts.length;
             scheduler.schedule();
             assert.equal(starts.length, before + 1, 'missed beats must not produce a catch-up burst');
             const next = starts.at(-1)!;
-            assert.ok(next.time >= now && next.time < now + .08);
-            const beat = Math.round((next.time - .015) / .125);
-            assert.ok(Math.abs(next.time - (.015 + beat * .125)) < 1e-9, 'recovery preserves beat phase');
-            assert.equal(next.buffer, scheduler.buffers[beat % 8], 'recovery preserves the alternating contact sequence');
+            assert.ok(next.time >= now && next.time < now + .3);
+            const beat = Math.round((next.time - .015) / 4);
+            assert.ok(Math.abs(next.time - (.015 + beat * 4)) < 1e-9, 'recovery preserves beat phase');
+            assert.equal(next.buffer, scheduler.buffers[beat % 4], 'recovery preserves the alternating contact sequence');
         }
         audio.disable();
         assert.ok(starts.every(source => source.stopped), 'disable cancels every queued contact');

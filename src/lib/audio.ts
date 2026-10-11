@@ -1,9 +1,9 @@
-/** A soft 4 Hz balance (eight escapement beats/second), explicitly opted into. */
+/** Quiet, slowly overlapping musical chords; playback is always explicitly opted into. */
 export class ConciergeAudio {
     private context: AudioContext | null = null;
     private master: GainNode | null = null;
     private enabled = false;
-    private volume = .18;
+    private volume = .055;
     private timer: ReturnType<typeof setInterval> | null = null;
     private beat = 0;
     private generation = 0;
@@ -42,9 +42,8 @@ export class ConciergeAudio {
             this.master = this.context.createGain();
             this.master.gain.value = this.volume;
             this.master.connect(this.context.destination);
-            // Several contact textures keep the mechanism from sounding like a
-            // repeated digital click; all are generated locally, once per context.
-            this.buffers = Array.from({ length: 8 }, (_, i) => this.makeContact(this.context!, i));
+            // Original major-seventh voicings, generated locally without audio downloads.
+            this.buffers = Array.from({ length: 4 }, (_, i) => this.makeChord(this.context!, i));
         }
         // Some devices leave resume pending indefinitely when audio is unavailable.
         // Bound startup and invalidate this attempt so a late resume cannot play.
@@ -65,75 +64,63 @@ export class ConciergeAudio {
         this.beat = 0;
         this.nextBeat = this.context.currentTime + .015;
         this.schedule();
-        this.timer = setInterval(() => this.schedule(), 25);
+        this.timer = setInterval(() => this.schedule(), 250);
     }
     disable() {
         if (this.timer) clearInterval(this.timer);
         this.timer = null; this.generation++; this.enabled = false;
-        // Cancel scheduled contacts as well as the timer, so an off/on sequence
-        // cannot revive queued beats when the same context resumes.
+        // Cancel scheduled chords as well as the timer, so an off/on sequence
+        // cannot revive queued chords when the same context resumes.
         for (const source of this.voices) { source.stop(); source.disconnect(); }
         this.voices.clear();
         void this.context?.suspend().catch(() => {});
         this.releasePlayback();
     }
-    // Interaction hooks stay silent so clicks cannot disrupt the clock rhythm.
+    // Interaction hooks stay silent so clicks cannot disrupt the ambience.
     tick() {}
-    private makeContact(context: AudioContext, variant: number) {
-        const buffer = context.createBuffer(1, Math.ceil(context.sampleRate * .032), context.sampleRate);
+    private makeChord(context: AudioContext, variant: number) {
+        const duration = 8;
+        const buffer = context.createBuffer(1, context.sampleRate * duration, context.sampleRate);
         const samples = buffer.getChannelData(0);
-        const tock = variant % 2 === 1;
-        const pitch = tock ? .965 : 1;
-        // Unlock, impulse, and the quieter pallet lock: tiny contacts within a
-        // single beat, rather than a second audible wall-clock tock.
-        const contacts = [{ at: 0, level: .46 }, { at: .0028, level: 1 }, { at: .0082, level: .24 }];
-        let softenedNoise = 0;
+        // Spacious Cmaj7 / Am7 / Fmaj7 / G6 voicings, with no percussive transient.
+        const chords = [[60, 64, 67, 71], [57, 60, 64, 67], [57, 60, 64, 65], [55, 59, 62, 64]];
+        const frequencies = chords[variant].map(note => 440 * 2 ** ((note - 69) / 12));
         for (let i = 0; i < samples.length; i++) {
             const time = i / context.sampleRate;
-            softenedNoise += .42 * ((Math.random() * 2 - 1) - softenedNoise);
-            let sample = 0;
-            for (const contact of contacts) {
-                const age = time - contact.at;
-                if (age < 0) continue;
-                const attack = Math.min(1, age / .0012);
-                const impact = softenedNoise * .4 * Math.exp(-age / .0022);
-                const metal = (.12 * Math.sin(2 * Math.PI * 1750 * pitch * age)
-                    + .06 * Math.sin(2 * Math.PI * 2550 * pitch * age)) * Math.exp(-age / .0038);
-                const body = .11 * Math.sin(2 * Math.PI * 820 * pitch * age) * Math.exp(-age / .0055);
-                sample += contact.level * attack * (impact + metal + body);
+            // Two-second raised-cosine attack and a six-second release meet at
+            // zero slope, preventing clicks and keeping transitions unhurried.
+            const envelope = time < 2
+                ? (1 - Math.cos(Math.PI * time / 2)) / 2
+                : (1 + Math.cos(Math.PI * (time - 2) / 6)) / 2;
+            let tone = 0;
+            for (const frequency of frequencies) {
+                tone += Math.sin(2 * Math.PI * frequency * time)
+                    + .08 * Math.sin(2 * Math.PI * frequency * 2 * time);
             }
-            // End at zero, without an abrupt cutoff or a long ringing tail.
-            samples[i] = sample * (tock ? .94 : 1) * Math.min(1, (.032 - time) / .003);
-        }
-        // Keep each tiny contact audible at the same restrained level on phone
-        // speakers; the master remains low and the envelope stays soft.
-        const peak = samples.reduce((maximum, sample) => Math.max(maximum, Math.abs(sample)), 0);
-        if (peak > 0) {
-            const level = .28 * (tock ? .94 : 1) / peak;
-            for (let i = 0; i < samples.length; i++) samples[i] *= level;
+            samples[i] = tone / frequencies.length * .16 * envelope;
         }
         return buffer;
     }
     private schedule() {
         const context = this.context;
         if (!this.enabled || !context || context.state !== 'running' || !this.master) return;
-        // Schedule on the audio clock so JS/render delays cannot shake the beat.
-        // After a device interruption, skip missed beats instead of catching up.
+        // Schedule on the audio clock so JS/render delays cannot disturb the progression.
+        // After a device interruption, skip missed chords instead of catching up.
         if (this.nextBeat < context.currentTime) {
-            // Keep the original phase and alternating pallet sequence even if
+            // Keep the original phase and chord sequence even if
             // the device clock jumps during startup or the JS thread stalls.
-            const missed = Math.ceil((context.currentTime - this.nextBeat) / .125);
-            this.nextBeat += missed * .125;
+            const missed = Math.ceil((context.currentTime - this.nextBeat) / 4);
+            this.nextBeat += missed * 4;
             this.beat += missed;
         }
-        while (this.nextBeat < context.currentTime + .08) {
+        while (this.nextBeat < context.currentTime + .3) {
             const source = context.createBufferSource();
             source.buffer = this.buffers[this.beat++ % this.buffers.length];
             source.connect(this.master);
             this.voices.add(source);
             source.onended = () => { this.voices.delete(source); source.disconnect(); };
             source.start(this.nextBeat);
-            this.nextBeat += .125;
+            this.nextBeat += 4;
         }
     }
     dispose() { this.disable(); void this.context?.close().catch(() => {}); }
