@@ -4,7 +4,7 @@ Migrations 008 and 009 are required before deploying this release. It adds passk
 
 ## Admin authentication
 
-Every admin data route calls `accessFor`, which requires a current email-authenticated owner session **and** verified passkey. Device user verification is mandatory, challenge lifetimes are five minutes, challenges are consumed once, and verification rotates the session token without extending its original expiry. Exact `TRACKING_SITE_URL` origin and hostname bind passkeys; preview and production have distinct passkeys. Configure the stable branch URL, not an immutable deployment URL.
+Every admin data route calls `accessFor`, which requires a current email-authenticated owner session **and** verified passkey. Device user verification is mandatory, challenge lifetimes are five minutes, challenges are consumed once, and verification rotates the session token without extending its original expiry. Exact `INTERNAL_PORTAL_URL` origin and hostname bind staff passkeys; preview and production have distinct passkeys. Configure the stable branch URL, not an immutable deployment URL.
 
 First enrollment additionally requires a 32-byte random one-time setup code, delivered outside email. Only its SHA-256 hash goes into `admin_enrollment` with the configured owner email and a short expiry. Initial enrollment consumes the hash atomically and is refused if that owner already has a key for this origin. Once verified, register a backup passkey through Admin security. No email-only reset or recovery bypass exists.
 
@@ -29,16 +29,16 @@ Prepare a **separate deployment/project** behind hosting authentication or an id
 
 Only that protected deployment receives `OMNI_PORTAL_MODE=internal` and an exact HTTPS `INTERNAL_PORTAL_URL`. Keep `TRACKING_SITE_URL` set to the customer site. Owner sign-in links go to the internal origin's `/private-desk`; customer links continue to the customer origin. Admin access additionally checks the exact request origin; other aliases fail closed. Keep the existing email and passkey requirements. New hostname means a new passkey enrollment on that hostname; old-host credentials are not transferable.
 
-Deployment provisioning and gateway verification remain a release gate. These source changes alone do not create a private network or update the currently deployed preview. Do not switch off hosting protection for the internal deployment. No paid service is authorized.
+Production deployment provisioning and gateway verification remain a release gate. The isolated staff preview below is provisioned and protected; this is a staff-only website, not a private network. Do not switch off hosting protection for the internal deployment. No paid service is authorized.
 
 ### Staff project setup (2026-10-11)
 
 - Project: `omni-private-desk` (`prj_FfeaneXFGG64gH5v9GK0Alo3Y6Wi`), Watch Pro Academy team.
 - Vercel Authentication is enabled for **all** deployments. Anonymous checks on both page and API URLs redirected to Vercel login across the canonical address, deployment URL and project alias.
 - Prepared preview address: `https://omni-private-desk.vercel.app/private-desk`.
-- Preview database configured; email, private Blob, scanner and remaining server settings must be connected before operational testing. No production database/document-store connection is configured.
+- Preview database, private Blob connection, scanner key and staff rate-limit secret are configured. Blob remains private and is connected only for Preview on both projects. A separate sending-only Resend key scoped to omnitimepieces.com and sender settings are configured in Preview. The staff sign-in email was delivered and consumed successfully on the new hostname. The operator enrolled a device passkey on the new hostname and opened the dashboard. Live preview checks confirmed Today excludes the October 9 fixture and This month includes it. Both synthetic private files downloaded successfully, matched their original SHA-256 hashes, and were recorded clean after scanning. A customer-visible test message saved successfully, its delivery job reached sent on the first attempt, and the notification appeared in the controlled Gmail inbox at 6:37 PM Miami time. Staff staged deployment: dpl_91fnw9rWJKiegXmqYBp8UmUMk1ws; canonical alias omni-private-desk.vercel.app. Anonymous page/API requests redirect to vercel.com/sso-api. No production database/document-store connection is configured.
 - The first CLI upload was treated as production by Vercel and failed the existing missing-configuration build guard. A subsequent explicitly staged deployment succeeded. Do not weaken that production guard.
-- Newly scoped credentials and actual new-origin passkey enrollment remain release gates. Existing passkeys on the customer-preview hostname cannot authorize the new hostname.
+- Preview credentials and new-origin enrollment are verified. Backup-passkey registration, independent security review, final retention policy, and production provisioning remain release gates. Existing passkeys on the customer-preview hostname cannot authorize the new hostname.
 
 ### Operator request filters
 
