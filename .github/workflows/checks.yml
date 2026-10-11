@@ -41,6 +41,11 @@ jobs:
         run: pnpm test:browser tests/browser/request-status.spec.ts --project=${{ matrix.browser }}
         env:
           REQUEST_TRACKING_ENABLED: 'true'
+      - name: Verify customer and operator portals
+        run: pnpm test:browser tests/browser/portal.spec.ts --project=${{ matrix.browser }}
+        env:
+          REQUEST_TRACKING_ENABLED: 'true'
+          REQUEST_PORTAL_ENABLED: 'true'
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         if: failure()
         with:

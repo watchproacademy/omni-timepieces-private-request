@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { ConciergeAudio } from '../../src/lib/audio';
 
-test('ambience recovery skips missed chords without bursts and cancels queued sources', async () => {
+test('piano recovery skips missed phrases without bursts and cancels queued sources', async () => {
     const starts: { time: number; buffer: unknown; stopped: boolean }[] = [];
     class Device {
         state = 'suspended';
@@ -12,6 +12,7 @@ test('ambience recovery skips missed chords without bursts and cancels queued so
         async resume() { this.state = 'running'; }
         async suspend() { this.state = 'suspended'; }
         async close() { this.state = 'closed'; }
+        async decodeAudioData() { return { duration: 42 }; }
         createGain() { return { gain: { value: 0 }, connect() {} }; }
         createBuffer(_channels: number, frames: number) {
             const samples = new Float32Array(frames);
@@ -26,6 +27,8 @@ test('ambience recovery skips missed chords without bursts and cancels queued so
             };
         }
     }
+    const previousFetch = globalThis.fetch;
+    globalThis.fetch = async () => new Response(new ArrayBuffer(4));
     const previous = Object.getOwnPropertyDescriptor(globalThis, 'window');
     Object.defineProperty(globalThis, 'window', { configurable: true, value: { AudioContext: Device } });
     const audio = new ConciergeAudio();
@@ -35,16 +38,16 @@ test('ambience recovery skips missed chords without bursts and cancels queued so
         assert.equal(starts.length, 1);
         assert.equal(starts[0].time, .015);
         // Reproduce a startup clock jump, then a longer foreground JS stall.
-        for (const now of [7.9, 15.9]) {
+        for (const now of [83.9, 167.9]) {
             scheduler.context.currentTime = now;
             const before: number = starts.length;
             scheduler.schedule();
             assert.equal(starts.length, before + 1, 'missed beats must not produce a catch-up burst');
             const next = starts.at(-1)!;
             assert.ok(next.time >= now && next.time < now + .3);
-            const beat = Math.round((next.time - .015) / 4);
-            assert.ok(Math.abs(next.time - (.015 + beat * 4)) < 1e-9, 'recovery preserves beat phase');
-            assert.equal(next.buffer, scheduler.buffers[beat % 4], 'recovery preserves the alternating contact sequence');
+            const beat = Math.round((next.time - .015) / 42);
+            assert.ok(Math.abs(next.time - (.015 + beat * 42)) < 1e-9, 'recovery preserves beat phase');
+            assert.equal(next.buffer, scheduler.buffers[0], 'recovery preserves the alternating contact sequence');
         }
         audio.disable();
         assert.ok(starts.every(source => source.stopped), 'disable cancels every queued contact');
@@ -54,6 +57,7 @@ test('ambience recovery skips missed chords without bursts and cancels queued so
         assert.equal(starts.length, off);
     } finally {
         audio.dispose();
+        globalThis.fetch = previousFetch;
         if (previous) Object.defineProperty(globalThis, 'window', previous);
         else Reflect.deleteProperty(globalThis, 'window');
     }

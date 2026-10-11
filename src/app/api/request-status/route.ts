@@ -14,6 +14,7 @@ async function throttle(key:string,limit:number) {
  return rows[0].count<=limit;
 }
 export async function GET(request:Request) {
+ if(process.env.REQUEST_PORTAL_ENABLED==='true'){const portal=await import('./portal/route');return portal.GET(request);}
  if(!enabled())return reply({message:'Request tracking is being prepared. Please reply to your confirmation email for an update.'},503);
  try{
  const access=await accessFor(request);if(!access)return reply({message:'Open a new private link to view your request.'},401);
@@ -44,7 +45,7 @@ export async function POST(request:Request) {
  const v=parsed.data;const email=v.email.toLowerCase().trim();const ip=process.env.VERCEL?request.headers.get('x-vercel-forwarded-for')?.split(',')[0]||'unknown':'local';
  if(!await throttle('ip:'+ip,20)||!await throttle('email:'+email,3))return reply({message:'Please wait before requesting another link.'},429);
  const owner=process.env.TRACKING_OWNER_EMAIL?.toLowerCase().trim();
- const matches=v.role==='owner'?email===owner:(await database().query("SELECT id FROM inquiries WHERE id=$1 AND lower(payload->'contact'->>'email')=$2 AND created_at>now()-interval '90 days'",[v.requestId,email])).length>0;
+ const matches=v.role==='owner'?email===owner:(await database().query(`SELECT id FROM inquiries WHERE id=$1 AND lower(payload->'contact'->>'email')=$2 AND ${process.env.REQUEST_PORTAL_ENABLED==='true'?"COALESCE(retention_until,created_at+interval '1 year')>now()":"created_at>now()-interval '90 days'"}`,[v.requestId,email])).length>0;
  if(matches){
  const token=await issueAccess(v.role,v.role==='owner'?null:v.requestId);
  const link=`${process.env.TRACKING_SITE_URL || config.siteUrl}/request-status#access=${token}`;
@@ -67,6 +68,7 @@ export async function POST(request:Request) {
  if(!orderInput.success)return reply({message:'Enter an order from Shopify.'},400);
  try{return reply(await orderChoices(orderInput.data.requestId,orderInput.data.orderId));}catch{return reply({message:'Order unavailable or its email does not match this request.'},400);}
  }
+ if(process.env.REQUEST_PORTAL_ENABLED==='true')return reply({message:'Use the private dashboard to update this request.'},400);
  const parsed=edit.safeParse(input);if(!parsed.success)return reply({message:'Check the watch update fields.'},400);
  try{await updateWatch(parsed.data.requestId,parsed.data.watchId,parsed.data);return reply({ok:true});}catch(error){return reply({message:error instanceof Error && !/sql|constraint|database|duplicate/i.test(error.message)?error.message:'The update could not be saved. Check that this order item is not already linked.'},409);}
  }catch{return reply({message:'The service is temporarily unavailable. Please try again.'},503);}

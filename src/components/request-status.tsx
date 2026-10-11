@@ -1,17 +1,19 @@
 'use client';
 import { useCallback,useEffect,useState } from 'react';
+import {RequestDashboard,type PortalRecord} from './request-dashboard';
 import { stageLabels,trackingStages } from '@/lib/tracking';
 type Watch={id:string;title:string;stage:string;manualStage:string;note:string;tracking:{company:string|null;number:string|null;url:string|null}[];stale:boolean;checkedAt:string|null;linked:boolean;payment:string|null;version?:number;orderId?:string;lineId?:string};
 type RequestView={id:string;createdAt:string;watches:Watch[]};
 async function post(body:unknown){const response=await fetch('/api/request-status',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});const data=await response.json();if(!response.ok)throw new Error(data.message);return data;}
-export function RequestStatus({enabled}:{enabled:boolean}) {
- const [role,setRole]=useState<'customer'|'owner'>('customer');const [signedIn,setSignedIn]=useState(false);const [token,setToken]=useState('');const [message,setMessage]=useState('');const [busy,setBusy]=useState(false);
- const [view,setView]=useState<RequestView|null>(null);const [list,setList]=useState<{id:string;brand:string;model:string}[]>([]);
+export function RequestStatus({enabled,portal=false,initialRole='customer'}:{enabled:boolean;portal?:boolean;initialRole?:'owner'|'customer'}) {
+ const [role,setRole]=useState<'customer'|'owner'>(initialRole);const [signedIn,setSignedIn]=useState(false);const [token,setToken]=useState('');const [message,setMessage]=useState('');const [busy,setBusy]=useState(false);
+ const [portalView,setPortalView]=useState<PortalRecord|null>(null);
+ const [view,setView]=useState<RequestView|null>(null);const [list,setList]=useState<{id:string;brand:string;model:string;name?:string}[]>([]);const [search,setSearch]=useState('');
  const load=useCallback(async(id?:string)=>{
-  const response=await fetch('/api/request-status'+(id?'?id='+encodeURIComponent(id):''),{cache:'no-store'});const data=await response.json();
+  const response=await fetch((portal?'/api/request-status/portal':'/api/request-status')+(id?'?id='+encodeURIComponent(id):''),{cache:'no-store'});const data=await response.json();
   if(response.status===401){setSignedIn(false);setView(null);setList([]);return;}
-  if(!response.ok)throw new Error(data.message);setSignedIn(true);setRole(data.role);setView(data.request||null);setList(data.requests||[]);
- },[]);
+  if(!response.ok)throw new Error(data.message);setSignedIn(true);setRole(data.role);setView(data.request||null);setPortalView(portal?data.request||null:null);setList(data.requests||[]);
+ },[portal]);
  useEffect(()=>{if(!enabled)return;const frame=requestAnimationFrame(()=>{const access=new URLSearchParams(window.location.hash.slice(1)).get('access');if(access){setToken(access);history.replaceState(null,'',window.location.pathname);}else{void load().catch(error=>setMessage(error.message));}});return ()=>cancelAnimationFrame(frame);},[enabled,load]);
  if(!enabled)return <p>Request tracking is being prepared. For an update, please reply to your confirmation email and include your request reference.</p>;
  async function run(action:()=>Promise<void>){setBusy(true);setMessage('');try{await action();}catch(error){setMessage(error instanceof Error?error.message:'Please try again.');}finally{setBusy(false);}}
@@ -25,11 +27,11 @@ export function RequestStatus({enabled}:{enabled:boolean}) {
  <button type="button" className="tracking-owner-link" onClick={()=>{setRole(role==='owner'?'customer':'owner');setMessage('');}}>{role==='owner'?'Customer request access':'Private desk sign-in'}</button>
  </form>:<>
  <div className="tracking-toolbar"><button disabled={busy} onClick={()=>void run(()=>load(view?.id))}>Refresh updates</button>{role==='owner'&&view?<button onClick={()=>void run(()=>load())}>All requests</button>:null}<button onClick={()=>void run(async()=>{await post({action:'logout'});setSignedIn(false);setView(null);setList([]);})}>Sign out</button></div>
- {view?<><p className="tracking-reference">{view.id}</p>{view.watches.map(watch=><article className="tracking-watch" key={watch.id}><h2>{watch.title}</h2><p className="tracking-current">{stageLabels[watch.stage]||watch.stage}</p>
+ {portal&&portalView?<RequestDashboard request={portalView} owner={role==='owner'} onSaved={()=>load(portalView.id)}/>:view?<><p className="tracking-reference">{view.id}</p>{view.watches.map(watch=><article className="tracking-watch" key={watch.id}><h2>{watch.title}</h2><p className="tracking-current">{stageLabels[watch.stage]||watch.stage}</p>
  <ol className="tracking-timeline" aria-label={`${watch.title} progress`}>{trackingStages.map((stage,index)=><li key={stage} aria-current={watch.stage===stage?'step':undefined} data-complete={stage==='received'||(stage==='paid'?watch.payment==='PAID':stage==='shipped'?['shipped','delivered'].includes(watch.stage):stage==='delivered'?watch.stage==='delivered':['sourcing','quoted'].includes(stage)&&trackingStages.indexOf(watch.stage as typeof trackingStages[number])>=index)}><span aria-hidden="true">{String(index+1).padStart(2,'0')}</span>{stageLabels[stage]}</li>)}</ol>
  {watch.note?<p>{watch.note}</p>:null}{watch.linked?<p className="tracking-sync">{watch.stale?'Shopify could not refresh. Displaying the last available update; please retry.':watch.checkedAt?`Shopify checked ${new Date(watch.checkedAt).toLocaleString()}`:'Waiting for Shopify confirmation.'}</p>:null}
  {watch.tracking.map((tracking,index)=><p key={index}>{tracking.url?<a href={tracking.url} target="_blank" rel="noreferrer">Track shipment · {tracking.company||'Carrier'} {tracking.number}</a>:<span>{tracking.company} {tracking.number}</span>}</p>)}
- {role==='owner'?<WatchUpdate key={watch.id+':'+watch.version} requestId={view.id} watch={watch} onSaved={()=>load(view.id)}/>:null}</article>)}</>:<><h2>Recent requests</h2>{list.length?list.map(item=><button className="tracking-request" key={item.id} onClick={()=>void run(()=>load(item.id))}><strong>{item.brand} {item.model}</strong><span>{item.id}</span></button>):<p>No active requests.</p>}</>}
+ {role==='owner'?<WatchUpdate key={watch.id+':'+watch.version} requestId={view.id} watch={watch} onSaved={()=>load(view.id)}/>:null}</article>)}</>:<><h2>Recent requests</h2>{portal?<label>Find a request<input type="search" value={search} onChange={event=>setSearch(event.target.value)} placeholder="Customer, watch, or request reference"/></label>:null}{list.length?list.filter(item=>!search||[item.id,item.brand,item.model,item.name].join(' ').toLowerCase().includes(search.toLowerCase())).map(item=><button className="tracking-request" key={item.id} onClick={()=>void run(()=>load(item.id))}><strong>{item.name?`${item.name} · `:''}{item.brand} {item.model}</strong><span>{item.id}</span></button>):<p>No active requests.</p>}</>}
  </>}
  </div>;
 }

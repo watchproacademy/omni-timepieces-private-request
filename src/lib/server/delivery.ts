@@ -1,4 +1,4 @@
-import { emailFor } from './email';
+import { emailFor, escapeHtml } from './email';
 import type { DeliveryJob } from './repository';
 export class DeliveryError extends Error {
     constructor(public code: string, public retryable: boolean, public ambiguous = false) { super(code); }
@@ -18,8 +18,14 @@ export async function deliver(job: DeliveryJob) {
             throw new DeliveryError(`webhook_${response.status}`, response.status === 429 || response.status >= 500, response.status >= 500);
         return `webhook:${job.inquiry_id}`;
     }
-    const receipt = job.kind === 'receipt';
-    const message = emailFor(job.payload, job.inquiry_id, job.kind);
+    const receipt = job.kind === 'receipt' || job.kind === 'update';
+    const update = job.kind === 'update' || job.kind === 'operator_update';
+    const portalUrl = `${process.env.TRACKING_SITE_URL || 'https://concierge.omnitimepieces.com'}/request-status`;
+    const message = update ? {
+        subject: `${job.inquiry_id} — ${job.event?.title || 'Request update'}`,
+        text: `${job.event?.message || 'Your request has an update.'}\n\nOpen your private dashboard: ${portalUrl}\nReference: ${job.inquiry_id}\nSign in with your request email. Documents are never attached to these notifications.`,
+        html: `<p>${escapeHtml(job.event?.message || 'Your request has an update.')}</p><p><a href="${escapeHtml(portalUrl)}">Open your private dashboard</a></p><p>Reference: ${escapeHtml(job.inquiry_id)}</p><p>Documents are never attached to these notifications.</p>`,
+    } : emailFor(job.payload, job.inquiry_id, job.kind as 'owner' | 'receipt');
     const response = await providerFetch('https://api.resend.com/emails', { method: 'POST', headers: { Authorization: `Bearer ${process.env.RESEND_API_KEY}`, 'Content-Type': 'application/json', 'Idempotency-Key': job.id }, body: JSON.stringify({ from: process.env.WATCH_REQUEST_FROM_EMAIL, to: receipt ? [job.payload.contact.email] : process.env.WATCH_REQUEST_TO_EMAIL!.split(',').map(v => v.trim()), reply_to: receipt ? (process.env.WATCH_REQUEST_REPLY_TO_EMAIL || process.env.WATCH_REQUEST_TO_EMAIL?.split(',')[0]) : job.payload.contact.email, ...message }) });
     if (!response.ok)
         throw new DeliveryError(`resend_${response.status}`, response.status === 429 || response.status >= 500, response.status >= 500);

@@ -132,3 +132,41 @@ production defaults to `https://concierge.omnitimepieces.com`. Never enable a
 preview against the production database. Verify owner/customer access separation,
 expired/replayed links, wrong order/email, stale edits, split shipments, partial
 payment, refunds, and unavailable Shopify before public launch.
+
+### Customer/operator portal (feature gated)
+
+`REQUEST_PORTAL_ENABLED=true` enables the independent workflow and requires private
+tracking access, migration `003_portal.sql`, and a separate PRIVATE Vercel Blob
+store per environment. Never attach the production store to preview deployments.
+The operator entry is `/private-desk`; customers use `/request-status`. Only the
+configured owner email can manage requests; no AI agent or extra team access is
+granted. Session links remain single-use and expire after 15 minutes.
+
+Stages are Received, Sourcing, Quote sent, Invoice sent, Paid, Transaction review,
+Ready to ship, Shipped, Delivered, plus Waiting and Cancelled. Stage changes save
+a customer email job atomically. Public messages and ready uploads also notify
+the appropriate party; internal notes are never included in customer responses.
+Retries use the existing outbox worker and maintenance reconciliation.
+
+KYC review is manual. The owner requests one identity document and optionally
+address/business evidence. Customers submit the form and requested files. The
+owner must explicitly attest to review before approval. Shipping requires approval
+and a previously recorded paid/review stage, plus carrier and tracking number.
+Shopify connection is optional evidence only; it cannot advance the independent
+workflow or override approval. Reconnect an order item to refresh its evidence.
+
+Files are private, authenticated downloads only, with generated names, signature
+checks (PDF/JPEG/PNG), 3 MB each and 20 files per request. No inline previews or
+automatic malware scan are provided. The operator should only open expected
+files with appropriate device protection. Files are not included in emails.
+Pending upload reservations are cleaned after one hour; completed files are
+retained 365 days from upload. Request retention extends to cover those files.
+Cleanup deletes objects before metadata, and blocks parent deletion while files
+remain. A database trigger protects retained inquiries from the older 90-day
+cleanup path. Retention settings are business choices, not legal determinations.
+Free storage has capacity/operation limits; an exceeded limit can interrupt
+uploads or downloads. No paid upgrade is automatic or authorized.
+
+Use synthetic documents only in tests. Before enabling production, verify both
+roles, cross-request denial, upload/download, incomplete and approved KYC,
+shipping rejection before approval, notification delivery, and expiry cleanup.

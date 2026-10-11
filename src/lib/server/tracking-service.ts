@@ -36,7 +36,7 @@ export async function updateWatch(id:string,watchId:string,input:{stage:string;n
 }
 
 export async function orderChoices(id:string,orderId:string) {
- const rows=await database().query("SELECT payload FROM inquiries WHERE id=$1 AND created_at>now()-interval '90 days'",[id]);
+ const rows=await database().query(`SELECT payload FROM inquiries WHERE id=$1 AND ${process.env.REQUEST_PORTAL_ENABLED==='true'?"COALESCE(retention_until,created_at+interval '1 year')>now()":"created_at>now()-interval '90 days'"}`,[id]);
  const payload=rows[0]?.payload as Inquiry|undefined;
  if(!payload)throw new Error('Request unavailable.');
  const order=await readOrder(orderId);

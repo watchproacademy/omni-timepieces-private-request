@@ -1,15 +1,17 @@
-/** Quiet, slowly overlapping musical chords; playback is always explicitly opted into. */
+/** Quiet original piano music; playback is always explicitly opted into. */
 export class ConciergeAudio {
     private context: AudioContext | null = null;
     private master: GainNode | null = null;
     private enabled = false;
-    private volume = .055;
+    private volume = .8;
     private timer: ReturnType<typeof setInterval> | null = null;
     private beat = 0;
     private generation = 0;
     private nextBeat = 0;
     private voices = new Set<AudioBufferSourceNode>();
     private buffers: AudioBuffer[] = [];
+    private loading: Promise<void> | null = null;
+    private phraseDuration = 42;
     private session: {type: string} | undefined;
     private previousSessionType: string | undefined;
     constructor(private readonly onInterrupted: () => void = () => {}) {}
@@ -42,16 +44,15 @@ export class ConciergeAudio {
             this.master = this.context.createGain();
             this.master.gain.value = this.volume;
             this.master.connect(this.context.destination);
-            // Original major-seventh voicings, generated locally without audio downloads.
-            this.buffers = Array.from({ length: 4 }, (_, i) => this.makeChord(this.context!, i));
+
         }
         // Some devices leave resume pending indefinitely when audio is unavailable.
         // Bound startup and invalidate this attempt so a late resume cannot play.
         let timeout: ReturnType<typeof setTimeout> | undefined;
         try {
             await Promise.race([
-                this.context.resume(),
-                new Promise<never>((_, reject) => { timeout = setTimeout(() => reject(new Error('Audio startup timed out.')), 4000); }),
+                Promise.all([this.context.resume(), this.loadMusic(this.context)]),
+                new Promise<never>((_, reject) => { timeout = setTimeout(() => reject(new Error('Audio startup timed out.')), 10000); }),
             ]);
         } catch (error) {
             if (generation === this.generation) this.disable();
@@ -69,8 +70,8 @@ export class ConciergeAudio {
     disable() {
         if (this.timer) clearInterval(this.timer);
         this.timer = null; this.generation++; this.enabled = false;
-        // Cancel scheduled chords as well as the timer, so an off/on sequence
-        // cannot revive queued chords when the same context resumes.
+        // Cancel scheduled phrases as well as the timer, so an off/on sequence
+        // cannot revive queued phrases when the same context resumes.
         for (const source of this.voices) { source.stop(); source.disconnect(); }
         this.voices.clear();
         void this.context?.suspend().catch(() => {});
@@ -78,39 +79,30 @@ export class ConciergeAudio {
     }
     // Interaction hooks stay silent so clicks cannot disrupt the ambience.
     tick() {}
-    private makeChord(context: AudioContext, variant: number) {
-        const duration = 8;
-        const buffer = context.createBuffer(1, context.sampleRate * duration, context.sampleRate);
-        const samples = buffer.getChannelData(0);
-        // Spacious Cmaj7 / Am7 / Fmaj7 / G6 voicings, with no percussive transient.
-        const chords = [[60, 64, 67, 71], [57, 60, 64, 67], [57, 60, 64, 65], [55, 59, 62, 64]];
-        const frequencies = chords[variant].map(note => 440 * 2 ** ((note - 69) / 12));
-        for (let i = 0; i < samples.length; i++) {
-            const time = i / context.sampleRate;
-            // Two-second raised-cosine attack and a six-second release meet at
-            // zero slope, preventing clicks and keeping transitions unhurried.
-            const envelope = time < 2
-                ? (1 - Math.cos(Math.PI * time / 2)) / 2
-                : (1 + Math.cos(Math.PI * (time - 2) / 6)) / 2;
-            let tone = 0;
-            for (const frequency of frequencies) {
-                tone += Math.sin(2 * Math.PI * frequency * time)
-                    + .08 * Math.sin(2 * Math.PI * frequency * 2 * time);
-            }
-            samples[i] = tone / frequencies.length * .16 * envelope;
+    private async loadMusic(context: AudioContext) {
+        if (this.buffers.length) return;
+        if (!this.loading) {
+            this.loading = (async () => {
+                // Fetch only after explicit opt-in; no audio cost on initial page load.
+                const response = await fetch('/assets/audio/concierge-piano.m4a', { signal: AbortSignal.timeout(9000) });
+                if (!response.ok) throw new Error('Music could not load.');
+                const buffer = await context.decodeAudioData(await response.arrayBuffer());
+                this.buffers = [buffer];
+                this.phraseDuration = buffer.duration;
+            })().finally(() => { this.loading = null; });
         }
-        return buffer;
+        await this.loading;
     }
     private schedule() {
         const context = this.context;
         if (!this.enabled || !context || context.state !== 'running' || !this.master) return;
         // Schedule on the audio clock so JS/render delays cannot disturb the progression.
-        // After a device interruption, skip missed chords instead of catching up.
+        // After a device interruption, skip missed phrases instead of catching up.
         if (this.nextBeat < context.currentTime) {
-            // Keep the original phase and chord sequence even if
+            // Keep the original phase and phrase sequence even if
             // the device clock jumps during startup or the JS thread stalls.
-            const missed = Math.ceil((context.currentTime - this.nextBeat) / 4);
-            this.nextBeat += missed * 4;
+            const missed = Math.ceil((context.currentTime - this.nextBeat) / this.phraseDuration);
+            this.nextBeat += missed * this.phraseDuration;
             this.beat += missed;
         }
         while (this.nextBeat < context.currentTime + .3) {
@@ -120,7 +112,7 @@ export class ConciergeAudio {
             this.voices.add(source);
             source.onended = () => { this.voices.delete(source); source.disconnect(); };
             source.start(this.nextBeat);
-            this.nextBeat += 4;
+            this.nextBeat += this.phraseDuration;
         }
     }
     dispose() { this.disable(); void this.context?.close().catch(() => {}); }
