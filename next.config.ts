@@ -1,7 +1,9 @@
 import type { NextConfig } from 'next';
 if (process.env.VERCEL_ENV === 'production') {
     const required = ['DATABASE_URL', 'RESEND_API_KEY', 'WATCH_REQUEST_FROM_EMAIL', 'CRON_SECRET', 'ABUSE_HASH_SECRET', 'WATCH_REQUEST_ALERT_EMAIL'];
-    if (process.env.REQUEST_TRACKING_ENABLED === 'true') required.push('TRACKING_OWNER_EMAIL','SHOPIFY_SHOP_DOMAIN','SHOPIFY_CLIENT_ID','SHOPIFY_CLIENT_SECRET');
+    if (process.env.REQUEST_TRACKING_ENABLED === 'true') required.push('TRACKING_OWNER_EMAIL');
+    const shopifyKeys = ['SHOPIFY_SHOP_DOMAIN','SHOPIFY_CLIENT_ID','SHOPIFY_CLIENT_SECRET'];
+    if (shopifyKeys.some(key => !!process.env[key])) required.push(...shopifyKeys);
     if (process.env.REQUEST_PORTAL_ENABLED === 'true') { required.push('BLOB_READ_WRITE_TOKEN'); if(process.env.REQUEST_TRACKING_ENABLED!=='true')throw new Error('Portal requires private tracking access.'); }
     if (process.env.WATCH_REQUEST_WEBHOOK_URL && !process.env.WATCH_REQUEST_REPLY_TO_EMAIL)
         required.push('WATCH_REQUEST_REPLY_TO_EMAIL');

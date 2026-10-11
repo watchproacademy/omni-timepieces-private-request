@@ -2,9 +2,9 @@
 import {useEffect,useState} from 'react';
 import {requestStages,requestStageLabels} from '@/lib/request-workflow';
 type Row={id:string;reference:string;name:string;brand:string;model:string;created_at:string;stages:string[]};
-export function AdminRequestList({onSelect}:{onSelect:(id:string)=>void}){
+export function AdminRequestList({onSelect,refresh=0}:{onSelect:(id:string)=>void;refresh?:number}){
  const [query,setQuery]=useState('page=1');const [revision,setRevision]=useState(0);const [period,setPeriod]=useState('all');const [result,setResult]=useState<{requests:Row[];total:number;page:number;pageSize:number}|null>(null);const [error,setError]=useState('');const [busy,setBusy]=useState(true);
- useEffect(()=>{const controller=new AbortController();fetch('/api/request-status/portal?'+query,{cache:'no-store',signal:controller.signal}).then(async response=>{const data=await response.json();if(!response.ok)throw new Error(data.message);if(data.role!=='owner')throw new Error('Operator access required.');setResult(data);}).catch(e=>{if(!controller.signal.aborted)setError(e.message);}).finally(()=>{if(!controller.signal.aborted)setBusy(false);});return()=>controller.abort();},[query,revision]);
+ useEffect(()=>{const controller=new AbortController();fetch('/api/request-status/portal?'+query,{cache:'no-store',signal:controller.signal}).then(async response=>{const data=await response.json();if(!response.ok)throw new Error(data.message);if(data.role!=='owner')throw new Error('Operator access required.');setResult(data);}).catch(e=>{if(!controller.signal.aborted)setError(e.message);}).finally(()=>{if(!controller.signal.aborted)setBusy(false);});return()=>controller.abort();},[query,revision,refresh]);
  function change(next:string){setError('');setBusy(true);setQuery(next);setRevision(value=>value+1);}
  function page(value:number){const params=new URLSearchParams(query);params.set('page',String(value));change(params.toString());}
  return <section aria-label="Request management"><h2>All requests</h2><form className="admin-filters" onSubmit={e=>{e.preventDefault();const params=new URLSearchParams();new FormData(e.currentTarget).forEach((value,key)=>{if(String(value))params.set(key,String(value));});params.set('page','1');change(params.toString());}}>

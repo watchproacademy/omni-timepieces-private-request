@@ -71,4 +71,5 @@ test('operator filters dates, stages and attention on the server',async({page})=
  await page.goto('/private-desk');await expect(page.getByText('51 matching requests')).toBeVisible();
  await page.getByLabel('Date received').selectOption('fortnight');await page.getByRole('combobox',{name:'Stage',exact:true}).selectOption('invoice_sent');await page.getByLabel('Needs attention').selectOption('unpaid');await page.getByRole('button',{name:'Apply filters'}).click();
  await expect.poll(()=>last).toContain('period=fortnight');await expect.poll(()=>last).toContain('attention=unpaid');await expect(page.getByText('51 matching requests')).toBeVisible();await page.getByRole('button',{name:'Next',exact:true}).click();await expect.poll(()=>last).toContain('page=2');
+ await page.getByRole('button',{name:'Refresh updates',exact:true}).click();await expect.poll(()=>last).toContain('page=2');await expect.poll(()=>last).toContain('attention=unpaid');await expect(page.getByText('51 matching requests')).toBeVisible();
 });
