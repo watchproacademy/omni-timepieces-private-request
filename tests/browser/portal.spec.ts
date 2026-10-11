@@ -1,4 +1,5 @@
 import {test,expect} from '@playwright/test';
+import AxeBuilder from '@axe-core/playwright';
 const record={id:'TEST-PORTAL',watches:[{id:'w',title:'Rolex Submariner',stage:'paid',version:2,carrier:'',trackingNumber:'',trackingUrl:''}],review:{state:'requested',version:1,requirements:['identity','address'],form:{}},files:[],notes:[],events:[]};
 test('customer dashboard exposes requested documents and messages, without operator controls',async({page})=>{
  test.skip(process.env.REQUEST_PORTAL_ENABLED!=='true');
@@ -23,4 +24,15 @@ test('document upload rejects oversized files before transmission',async({page})
  await page.goto('/request-status');await page.getByLabel('Upload identity document').setInputFiles({name:'synthetic.pdf',mimeType:'application/pdf',buffer:Buffer.alloc(3*1024*1024+1)});
  await page.locator('.portal-upload').filter({has:page.getByLabel('Upload identity document')}).getByRole('button',{name:'Upload securely',exact:true}).click();
  await expect(page.getByText('Please choose a file smaller than 3 MB.')).toBeVisible();expect(uploads).toBe(0);
+});
+
+test('portal remains accessible in light and dark themes',async({page})=>{
+ test.skip(process.env.REQUEST_PORTAL_ENABLED!=='true');
+ await page.route('**/api/request-status/portal**',route=>route.fulfill({json:{role:'customer',request:record}}));
+ await page.goto('/request-status');await expect(page.getByRole('heading',{name:'Rolex Submariner'})).toBeVisible();
+ for(const name of ['Light appearance','Dark appearance']){
+  await page.getByRole('radio',{name}).click();
+  const result=await new AxeBuilder({page}).include('main').withTags(['wcag2a','wcag2aa','wcag21aa']).analyze();
+  expect(result.violations).toEqual([]);
+ }
 });
