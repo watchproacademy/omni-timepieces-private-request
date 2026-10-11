@@ -3,7 +3,7 @@ import { readOrder, verifyOrderItem } from './shopify';
 import { summarizeOrder } from '../tracking';
 import type { Inquiry } from '../validation';
 export async function trackingRequest(id:string,owner:boolean) {
- const rows=await database().query("SELECT payload,created_at FROM inquiries WHERE id=$1 AND created_at>now()-interval '90 days'",[id]);
+ const rows=await database().query("SELECT payload,created_at,public_reference FROM inquiries WHERE id=$1 AND created_at>now()-interval '90 days'",[id]);
  if(!rows[0])throw new Error('This request is unavailable or has expired. Contact the private desk.');
  const payload=rows[0].payload as Inquiry;
  const progress=await database().query('SELECT * FROM watch_progress WHERE inquiry_id=$1',[id]);
@@ -22,7 +22,7 @@ export async function trackingRequest(id:string,owner:boolean) {
   }
   return {id:watch.id,title:`${watch.brand} ${watch.model}`,stage:snapshot?.stage||row?.stage||'received',manualStage:row?.stage||'received',note:row?.note||'',tracking:snapshot?.tracking||[],payment:snapshot?.payment||null,checkedAt:checked||null,stale,linked:!!row?.order_id,...(owner?{version:row?.version||0,orderId:row?.order_id||'',lineId:row?.line_id||''}:{})};
  }));
- return {id,createdAt:rows[0].created_at,watches};
+ return {id,reference:rows[0].public_reference,createdAt:rows[0].created_at,watches};
 }
 export async function updateWatch(id:string,watchId:string,input:{stage:string;note:string;orderId:string;lineId:string;version:number}) {
  const rows=await database().query("SELECT payload FROM inquiries WHERE id=$1 AND created_at>now()-interval '90 days'",[id]);

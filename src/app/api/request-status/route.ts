@@ -21,7 +21,7 @@ export async function GET(request:Request) {
  if(!await throttle('session:'+(request.headers.get('cookie')||''),600))return reply({message:'Please wait before refreshing again.'},429);
  const id=new URL(request.url).searchParams.get('id')||access.inquiry_id;
  if(!id){
- const rows=await database().query("SELECT id,created_at,payload->'watches'->0->>'brand' AS brand,payload->'watches'->0->>'model' AS model FROM inquiries WHERE created_at>now()-interval '90 days' ORDER BY created_at DESC LIMIT 100");
+ const rows=await database().query("SELECT id,public_reference AS reference,created_at,payload->'watches'->0->>'brand' AS brand,payload->'watches'->0->>'model' AS model FROM inquiries WHERE created_at>now()-interval '90 days' ORDER BY created_at DESC LIMIT 100");
  return reply({role:access.role,requests:rows});
  }
  if(access.role!=='owner'&&access.inquiry_id!==id)return reply({message:'Request unavailable.'},404);
@@ -45,9 +45,11 @@ export async function POST(request:Request) {
  const v=parsed.data;const email=v.email.toLowerCase().trim();const ip=process.env.VERCEL?request.headers.get('x-vercel-forwarded-for')?.split(',')[0]||'unknown':'local';
  if(!await throttle('ip:'+ip,20)||!await throttle('email:'+email,3))return reply({message:'Please wait before requesting another link.'},429);
  const owner=process.env.TRACKING_OWNER_EMAIL?.toLowerCase().trim();
- const matches=v.role==='owner'?email===owner:(await database().query(`SELECT id FROM inquiries WHERE id=$1 AND lower(payload->'contact'->>'email')=$2 AND ${process.env.REQUEST_PORTAL_ENABLED==='true'?"COALESCE(retention_until,created_at+interval '1 year')>now()":"created_at>now()-interval '90 days'"}`,[v.requestId,email])).length>0;
+ const normalized=v.requestId.trim().toUpperCase().replace(/[\s-]/g,'');
+ const matched=v.role==='customer'?(await database().query(`SELECT id FROM inquiries WHERE (id=$1 OR replace(public_reference,'-','')=$3) AND lower(payload->'contact'->>'email')=$2 AND ${process.env.REQUEST_PORTAL_ENABLED==='true'?"COALESCE(retention_until,created_at+interval '1 year')>now()":"created_at>now()-interval '90 days'"}`,[v.requestId.trim().toUpperCase(),email,normalized]))[0]:null;
+ const matches=v.role==='owner'?email===owner:!!matched;
  if(matches){
- const token=await issueAccess(v.role,v.role==='owner'?null:v.requestId);
+ const token=await issueAccess(v.role,v.role==='owner'?null:matched!.id);
  const link=`${process.env.TRACKING_SITE_URL || config.siteUrl}/request-status#access=${token}`;
  const result=await fetch('https://api.resend.com/emails',{method:'POST',headers:{Authorization:`Bearer ${process.env.RESEND_API_KEY}`,'Content-Type':'application/json','Idempotency-Key':'tracking:'+tokenHash(token)},body:JSON.stringify({from:process.env.WATCH_REQUEST_FROM_EMAIL,to:[email],subject:'Your private Omni request access',text:`Open your private request page: ${link}\n\nThis one-use link expires in 15 minutes. Keep it private. If you did not request this link, ignore this email.`}),signal:AbortSignal.timeout(10000)});
  if(!result.ok)throw new Error('email unavailable');

@@ -36,14 +36,14 @@ export function portalError(error:unknown) {
 export async function portalView(id:string,access:TrackingAccess) {
  const sql=database();
  const [inquiries,watches,reviews,notes,files,events]=await Promise.all([
- sql.query('SELECT payload,created_at FROM inquiries WHERE id=$1',[id]),
+ sql.query('SELECT payload,created_at,public_reference FROM inquiries WHERE id=$1',[id]),
  sql.query('SELECT * FROM watch_progress WHERE inquiry_id=$1',[id]),
  sql.query('SELECT * FROM request_reviews WHERE inquiry_id=$1',[id]),
  sql.query(`SELECT id,author,visibility,body,created_at FROM request_notes WHERE inquiry_id=$1 ${access.role==='owner'?'':"AND visibility='customer'"} ORDER BY created_at LIMIT 200`,[id]),
  sql.query("SELECT id,kind,mime,size,created_at FROM request_files WHERE inquiry_id=$1 AND state='ready' AND expires_at>now() ORDER BY created_at",[id]),
  sql.query("SELECT action,detail,created_at FROM request_events WHERE inquiry_id=$1 AND action IN ('stage','review') ORDER BY created_at DESC LIMIT 100",[id])]);
  const payload=inquiries[0].payload;
- return {id,createdAt:inquiries[0].created_at,customer:access.role==='owner'?{name:payload.contact.fullName,email:payload.contact.email}:undefined,
+ return {id,reference:inquiries[0].public_reference,createdAt:inquiries[0].created_at,customer:access.role==='owner'?{name:payload.contact.fullName,email:payload.contact.email}:undefined,
  watches:payload.watches.map((watch:{id:string;brand:string;model:string})=>{const row=watches.find(w=>w.watch_id===watch.id);return {id:watch.id,title:`${watch.brand} ${watch.model}`,stage:migrateRequestStage(row?.stage||'received'),version:row?.version||0,carrier:row?.carrier||'',trackingNumber:row?.tracking_number||'',trackingUrl:row?.tracking_url||'',...(access.role==='owner'?{orderId:row?.order_id||'',lineId:row?.line_id||'',shopify:row?.snapshot||null}:{})};}),
  review:reviews[0]||{state:'not_requested',version:0,requirements:['identity'],form:{}},notes,files,events};
 }

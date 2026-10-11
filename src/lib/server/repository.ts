@@ -5,6 +5,7 @@ import type { Inquiry } from '../validation';
 export type DeliveryJob = {
     id: string;
     inquiry_id: string;
+    public_reference?: string;
     kind: 'owner' | 'receipt' | 'update' | 'operator_update';
     event?: {title: string; message: string};
     state: string;
@@ -18,7 +19,8 @@ export function payloadHash(payload: Inquiry) { return createHash('sha256').upda
 export async function acceptInquiry(payload: Inquiry, key: string, ip: string) {
     const requestId = `WR-${new Date().toISOString().slice(0, 10).replaceAll('-', '')}-${randomUUID().toUpperCase()}`;
     const rows = await database().query('SELECT * FROM accept_inquiry($1,$2,$3,$4::jsonb,$5,$6)', [requestId, key, payloadHash(payload), JSON.stringify(payload), fingerprint(ip), fingerprint(payload.contact.email.toLowerCase())]);
-    return { requestId: rows[0].request_id as string, duplicate: rows[0].duplicate as boolean };
+    const references = await database().query('SELECT public_reference FROM inquiries WHERE id=$1', [rows[0].request_id]);
+    return { requestId: rows[0].request_id as string, reference: references[0].public_reference as string, duplicate: rows[0].duplicate as boolean };
 }
 export async function pendingJobIds(requestId?: string) {
     const rows = await database().query(`SELECT id FROM delivery_jobs WHERE state IN ('pending','sending') AND (lease_until IS NULL OR lease_until<now()) AND next_attempt_at<=now() ${requestId ? 'AND inquiry_id=$1' : ''} ORDER BY created_at LIMIT 100`, requestId ? [requestId] : []);
@@ -30,7 +32,7 @@ export async function claimJob(id: string): Promise<DeliveryJob | null> {
     const rows = await database().query(`WITH claimed AS (
  UPDATE delivery_jobs SET state='sending',attempts=attempts+1,first_attempt_at=COALESCE(first_attempt_at,now()),lease_until=now()+interval '2 minutes',lease_token=$2
  WHERE id=$1 AND state IN ('pending','sending') AND (lease_until IS NULL OR lease_until<now()) AND next_attempt_at<=now() RETURNING *
- ) SELECT claimed.*,inquiries.payload FROM claimed JOIN inquiries ON inquiries.id=claimed.inquiry_id`, [id, token]);
+ ) SELECT claimed.*,inquiries.payload,inquiries.public_reference FROM claimed JOIN inquiries ON inquiries.id=claimed.inquiry_id`, [id, token]);
     if (rows[0])
         return rows[0] as DeliveryJob;
     const waiting = await database().query("SELECT state FROM delivery_jobs WHERE id=$1 AND state IN ('pending','sending')", [id]);

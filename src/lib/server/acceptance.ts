@@ -10,6 +10,7 @@ export type AcceptanceDependencies = {
     };
     accept: (payload: Inquiry, key: string, ip: string) => Promise<{
         requestId: string;
+        reference?: string;
         duplicate: boolean;
     }>;
     publish: (id: string) => void;
@@ -72,7 +73,7 @@ export async function handleSubmission(request: Request, deps: AcceptanceDepende
         const ip = process.env.VERCEL ? request.headers.get('x-vercel-forwarded-for')?.split(',')[0]?.trim() || 'unknown' : 'local';
         const result = await deps.accept(payload, key, ip);
         try { deps.publish(result.requestId); } catch { console.error('outbox_publish_failed', { requestId: result.requestId }); }
-        return json({ ok: true, status: 'accepted', preview: false, requestId: result.requestId }, result.duplicate ? 200 : 202);
+        return json({ ok: true, status: 'accepted', preview: false, requestId: result.requestId, reference: result.reference }, result.duplicate ? 200 : 202);
     }
     catch (error) {
         const message = error instanceof Error ? error.message : '';

@@ -172,3 +172,6 @@ roles, cross-request denial, upload/download, incomplete and approved KYC,
 shipping rejection before approval, notification delivery, and expiry cleanup.
 
 Portal release gate: production document collection remains disabled pending confirmation of the Florida retention schedule. Buyer verification, secondhand acquisition/trade-in records, and invoices must not be assumed to share one legal retention period. The preview one-year expiry is a test configuration, not a compliance determination.
+
+### Short request references
+Migration `004_request_references.sql` adds stable unique customer references such as `OMNI-7K9M-4R2X`, including for existing inquiries. The original inquiry IDs remain unchanged for relationships, delivery deduplication, and analytics. Login accepts either reference plus the matching email; short references ignore case, spaces, and hyphens. Database allocation serializes collision checks and retries collisions. Apply this additive migration before deploying code that reads `public_reference`.

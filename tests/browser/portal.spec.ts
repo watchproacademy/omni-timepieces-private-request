@@ -1,10 +1,11 @@
 import {test,expect} from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
-const record={id:'TEST-PORTAL',watches:[{id:'w',title:'Rolex Submariner',stage:'paid',version:2,carrier:'',trackingNumber:'',trackingUrl:''}],review:{state:'requested',version:1,requirements:['identity','address'],form:{}},files:[],notes:[],events:[]};
+const record={id:'TEST-PORTAL',reference:'OMNI-7K9M-4R2X',watches:[{id:'w',title:'Rolex Submariner',stage:'paid',version:2,carrier:'',trackingNumber:'',trackingUrl:''}],review:{state:'requested',version:1,requirements:['identity','address'],form:{}},files:[],notes:[],events:[]};
 test('customer dashboard exposes requested documents and messages, without operator controls',async({page})=>{
  test.skip(process.env.REQUEST_PORTAL_ENABLED!=='true');
  await page.route('**/api/request-status/portal**',route=>route.fulfill({json:{role:'customer',request:record}}));
  await page.goto('/request-status');await expect(page.getByRole('heading',{name:'Rolex Submariner'})).toBeVisible();
+ await expect(page.locator('.tracking-reference')).toHaveText('OMNI-7K9M-4R2X');
  await expect(page.getByLabel('Upload identity document')).toBeVisible();await expect(page.getByLabel('Upload proof of address')).toBeVisible();
  await expect(page.getByRole('button',{name:'Submit for review'})).toBeVisible();await expect(page.getByLabel('Update stage')).toHaveCount(0);
  await expect(page.getByText('Internal operator note only')).toHaveCount(0);

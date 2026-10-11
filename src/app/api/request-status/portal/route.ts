@@ -11,7 +11,7 @@ export async function GET(request:Request){
  try{
  const access=await accessFor(request);if(!access)throw new Error('ACCESS_DENIED');await portalLimit(request,600);
  const id=new URL(request.url).searchParams.get('id')||access.inquiry_id;
- if(!id){if(access.role!=='owner')throw new Error('ACCESS_DENIED');const rows=await database().query("SELECT id,created_at,payload->'contact'->>'fullName' AS name,payload->'watches'->0->>'brand' AS brand,payload->'watches'->0->>'model' AS model FROM inquiries WHERE COALESCE(retention_until,created_at+interval '1 year')>now() ORDER BY created_at DESC LIMIT 100");return portalReply({role:access.role,requests:rows});}
+ if(!id){if(access.role!=='owner')throw new Error('ACCESS_DENIED');const rows=await database().query("SELECT id,public_reference AS reference,created_at,payload->'contact'->>'fullName' AS name,payload->'watches'->0->>'brand' AS brand,payload->'watches'->0->>'model' AS model FROM inquiries WHERE COALESCE(retention_until,created_at+interval '1 year')>now() ORDER BY created_at DESC LIMIT 100");return portalReply({role:access.role,requests:rows});}
  await portalAccess(request,id);return portalReply({role:access.role,request:await portalView(id,access)});
  }catch(error){return portalError(error);}
 }

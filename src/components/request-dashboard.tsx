@@ -1,7 +1,7 @@
 'use client';
 import {useState} from 'react';
 import {requestStages,requestStageLabels,reviewStates,type RequestStage} from '@/lib/request-workflow';
-export type PortalRecord={id:string;customer?:{name:string;email:string};watches:{id:string;title:string;stage:string;version:number;carrier:string;trackingNumber:string;trackingUrl:string;orderId?:string;lineId?:string;shopify?:{stage:string;payment:string}|null}[];review:{state:string;version:number;requirements:string[];form:{legalName?:string;address?:string;businessName?:string;relationship?:string;consent?:boolean}};notes:{id:string;author:string;visibility:string;body:string;created_at:string}[];files:{id:string;kind:string;created_at:string}[];events:{action:string;detail:{to?:string};created_at:string}[]};
+export type PortalRecord={id:string;reference?:string;customer?:{name:string;email:string};watches:{id:string;title:string;stage:string;version:number;carrier:string;trackingNumber:string;trackingUrl:string;orderId?:string;lineId?:string;shopify?:{stage:string;payment:string}|null}[];review:{state:string;version:number;requirements:string[];form:{legalName?:string;address?:string;businessName?:string;relationship?:string;consent?:boolean}};notes:{id:string;author:string;visibility:string;body:string;created_at:string}[];files:{id:string;kind:string;created_at:string}[];events:{action:string;detail:{to?:string};created_at:string}[]};
 const titles:Record<string,string>={identity:'Identity document',address:'Proof of address',business:'Business documents',invoice:'Invoice'};
 const reviewLabels:Record<string,string>={not_requested:'Not requested',requested:'Documents requested',submitted:'Submitted for review',in_review:'Under review',changes_requested:'More information needed',approved:'Approved',declined:'Not approved'};
 async function post(body:unknown,path='/api/request-status/portal'){const response=await fetch(path,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});const result=await response.json();if(!response.ok)throw new Error(result.message);return result;}
@@ -11,7 +11,7 @@ export function RequestDashboard({request,owner,onSaved}:{request:PortalRecord;o
  async function run(action:()=>Promise<void>){setBusy(true);setMessage('');try{await action();await onSaved();setMessage('Saved.');}catch(error){setMessage(error instanceof Error?error.message:'Please retry.');}finally{setBusy(false);}}
  const canSubmit=['requested','changes_requested'].includes(request.review.state);
  return <div className="request-dashboard">
- <p className="tracking-reference">{request.id}</p>{owner&&request.customer?<h2>{request.customer.name}</h2>:null}
+ <p className="tracking-reference">{request.reference || request.id}</p>{owner&&request.customer?<h2>{request.customer.name}</h2>:null}
  {message?<p role="status" className="tracking-message">{message}</p>:null}
  {request.watches.map(watch=><article className="tracking-watch" key={watch.id}><h2>{watch.title}</h2><p className="tracking-current">{requestStageLabels[watch.stage as RequestStage]||watch.stage}</p>
  <ol className="tracking-timeline" aria-label={`${watch.title} progress`}>{requestStages.map((stage,index)=><li key={stage} aria-current={watch.stage===stage?'step':undefined} data-complete={index<=requestStages.indexOf(watch.stage as RequestStage)}><span aria-hidden="true">{index+1}</span>{requestStageLabels[stage]}</li>)}</ol>

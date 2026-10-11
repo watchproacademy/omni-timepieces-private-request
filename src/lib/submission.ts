@@ -9,6 +9,7 @@ export async function submitInquiry(payload: Inquiry, key: string, website: stri
         throw new SubmissionError(result.message || 'Your request could not be saved. Please try again.', result.fields);
     return result as {
         requestId: string;
+        reference?: string;
         status: 'accepted';
         preview: boolean;
     };

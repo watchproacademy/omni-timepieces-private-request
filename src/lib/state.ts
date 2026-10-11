@@ -29,6 +29,7 @@ export type RequestState = {
     submissionKey: string;
     accepted?: {
         requestId: string;
+    reference?: string;
         preview: boolean;
     };
     status: 'idle' | 'submitting';
@@ -83,6 +84,7 @@ export type Action = { type: 'navigation/start' } | { type: 'advance'; fromStep:
 } | {
     type: 'submission/accepted';
     requestId: string;
+    reference?: string;
     preview: boolean;
 } | {
     type: 'reset';
@@ -131,7 +133,7 @@ export function reducer(state: RequestState, action: Action): RequestState {
         case 'update': return { ...state, ...action.patch, submissionKey: action.patch.submissionKey ?? '' };
         case 'submission/start': return { ...state, status: 'submitting' };
         case 'submission/failure': return { ...state, status: 'idle' };
-        case 'submission/accepted': return { ...state, status: 'idle', accepted: { requestId: action.requestId, preview: action.preview } };
+        case 'submission/accepted': return { ...state, status: 'idle', accepted: { requestId: action.requestId, reference: action.reference, preview: action.preview } };
         case 'reset': return { ...initialState(), submissionKey: action.key };
     }
 }
