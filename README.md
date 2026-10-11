@@ -84,3 +84,51 @@ The description guide clears suggestions whenever the brief is edited. Applying 
 The shared configuration provider is independent of request state, keeping catalog, validation, draft, and submission code out of public-page dependencies. Later funnel sections load as separate chunks. Header, footer, and editorial links do not speculatively prefetch entire routes; normal links and server-rendered public content remain intact.
 
 Latin WOFF2 subsets reduce initial font transfer while the complete licensed fonts remain available for other characters. Regenerate the subsets with `scripts/subset-fonts.py` using the pinned optional font tooling documented in that file. Both font faces keep `font-display: swap`; the hero subset is preloaded. Photography uses the approved Next image quality setting of 60, retaining responsive sizing and lazy loading. Compare mobile lab evidence in `launch-kit/mobile-before.json` and `launch-kit/mobile-after.json`; these are not production field measurements.
+
+### Private request tracking (staged feature)
+
+`REQUEST_TRACKING_ENABLED` defaults to false. Do not enable it before applying
+`002_tracking.sql`, configuring `TRACKING_OWNER_EMAIL`, and testing the Shopify
+connection in an isolated preview. The main inquiry/submission flow works while
+tracking is disabled. `pnpm db:migrate` applies both additive migrations.
+
+Customers use **Check my request**, entering the reference from their receipt and
+its email address. Matching customers receive a one-use link valid for 15 minutes;
+opening it creates a one-hour HttpOnly session. The link is carried in a URL
+fragment and removed before opening the request. Owner login uses only
+`TRACKING_OWNER_EMAIL`; customer sessions cannot access the owner list or updates.
+Links and sessions are stored only as hashes. Rate limits use database counters.
+No private pages enter the sitemap; responses are uncached and noindex.
+
+Owners select a request, update each watch's sourcing/quote/waiting/cancelled stage
+and customer-visible note, then paste the Shopify admin order URL and choose its
+quantity-one line item. The order email must match the inquiry. A Shopify line
+cannot be linked to multiple watches. Editing uses version checks to reject stale
+forms. Clearing a link never changes the Shopify order.
+
+Shopify is read-only. Configure a Dev Dashboard app installed on Omni's
+`11af59-2.myshopify.com`, with order read access. Set its `SHOPIFY_CLIENT_ID` and
+`SHOPIFY_CLIENT_SECRET` as server-only environment variables. Client-credentials
+access requires the app and store to belong to the same Shopify organization.
+The app exchanges credentials for a temporary token, refreshing before expiry.
+No connector token is copied into the website. Orders older than Shopify's
+standard 60-day access window require approved `read_all_orders` access; without
+it the interface clearly shows a stale update and the customer should contact
+the desk. Do not promise automatic delivered status without carrier confirmation.
+
+Order snapshots refresh when an authenticated user opens or refreshes the page,
+with a 60-second cache; this initial version does not use webhooks or send status
+change emails. Failed refreshes explicitly show that the cached status may be
+stale. A label alone is not shipment; partial payments are not paid. Shopify
+cancellations/refunds supersede the normal timeline. Each watch follows its own
+fulfillment item. Truncated or multi-quantity order items fail closed.
+
+The existing 90-day inquiry purge cascades to watch progress, audit entries, and
+customer access records. Maintenance also deletes expired owner sessions/links
+when tracking is enabled. Shopify order and email retention are separate.
+
+For preview email links set `TRACKING_SITE_URL` to the isolated HTTPS preview URL;
+production defaults to `https://concierge.omnitimepieces.com`. Never enable a
+preview against the production database. Verify owner/customer access separation,
+expired/replayed links, wrong order/email, stale edits, split shipments, partial
+payment, refunds, and unavailable Shopify before public launch.

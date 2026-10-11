@@ -44,5 +44,6 @@ export async function purgeExpired() {
     await sql.transaction([
         sql.query("DELETE FROM inquiries WHERE created_at<now()-($1 * interval '1 day')", [config.retentionDays]),
         sql.query('DELETE FROM abuse_windows WHERE expires_at<now()'),
+        ...(process.env.REQUEST_TRACKING_ENABLED === 'true' ? [sql.query('DELETE FROM tracking_access WHERE expires_at<now()')] : []),
     ]);
 }
