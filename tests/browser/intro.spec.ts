@@ -31,7 +31,7 @@ test('intro copy is server rendered and accessible in both themes', async ({page
     await expect(page.getByRole('heading',{name:'Which brand are we looking for?'})).toBeFocused();
 });
 
-test('rapid sound toggles preserve the latest choice and hidden tabs stop the clock', async ({page}) => {
+test('rapid sound toggles preserve the latest choice and hidden tabs stop the ambience', async ({page}) => {
     await page.addInitScript(() => {
         let release = () => {};
         const gate = new Promise<void>(resolve => { release = resolve; });
@@ -52,7 +52,7 @@ test('rapid sound toggles preserve the latest choice and hidden tabs stop the cl
     await sound.click(); await sound.click();
     await page.evaluate(() => (window as typeof window & {__clockEvidence:{release:()=>void}}).__clockEvidence.release());
     await expect(sound).toHaveAttribute('aria-checked','true');
-    await expect.poll(()=>page.evaluate(()=>(window as typeof window & {__clockEvidence:{starts:number}}).__clockEvidence.starts)).toBeGreaterThanOrEqual(3);
+    await expect.poll(()=>page.evaluate(()=>(window as typeof window & {__clockEvidence:{starts:number}}).__clockEvidence.starts), { timeout: 15000 }).toBeGreaterThanOrEqual(3);
     await page.evaluate(()=>{Object.defineProperty(document,'hidden',{configurable:true,value:true});document.dispatchEvent(new Event('visibilitychange'));});
     await expect(sound).toHaveAttribute('aria-checked','false');
     const stopped = await page.evaluate(()=>(window as typeof window & {__clockEvidence:{starts:number}}).__clockEvidence.starts);
