@@ -37,3 +37,19 @@ test('portal remains accessible in light and dark themes',async({page})=>{
   expect(result.violations).toEqual([]);
  }
 });
+
+test('linear progress advances per watch and handles completion and paused requests',async({page})=>{
+ test.skip(process.env.REQUEST_PORTAL_ENABLED!=='true');
+ let stage='received';
+ await page.route('**/api/request-status/portal**',route=>route.fulfill({json:{role:'customer',request:{...record,watches:[{...record.watches[0],stage}]}}}));
+ await page.goto('/request-status');
+ const progress=page.getByRole('progressbar',{name:'Rolex Submariner request progress'});
+ await expect(progress).toHaveAttribute('aria-valuenow','1');
+ for(const [next,value] of [['paid','5'],['delivered','9']]){
+  stage=next;await page.getByRole('button',{name:'Refresh updates'}).click();await expect(progress).toHaveAttribute('aria-valuenow',value);
+ }
+ await expect(page.getByText('Your timepiece has arrived.')).toBeVisible();
+ await page.getByText('View all stages',{exact:true}).click();await expect(page.locator('.request-progress-details [aria-current="step"]')).toHaveText(/Delivered/);
+ stage='waiting';await page.getByRole('button',{name:'Refresh updates'}).click();await expect(page.getByText('On hold',{exact:true})).toBeVisible();await expect(progress).toHaveCount(0);
+ stage='cancelled';await page.getByRole('button',{name:'Refresh updates'}).click();await expect(page.getByText('Request cancelled',{exact:true})).toBeVisible();await expect(progress).toHaveCount(0);
+});

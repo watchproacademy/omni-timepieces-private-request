@@ -80,3 +80,22 @@ test('reference tiers sum watch budgets, mark unknown ranges, preserve aliases a
  assert.match((await db.query<{public_reference:string}>("SELECT public_reference FROM inquiries WHERE id='new-tier'")).rows[0].public_reference,/^OMNI-WR\d{8}-B\d{4,}-[A-Z]{4}$/);
  }finally{await db.close();}
 });
+
+test('brand references preserve the sequence and aliases, with same-brand and mixed baskets',async()=>{
+ const db=new PGlite();try{
+ for(const file of ['001_inquiries.sql','004_request_references.sql','005_dated_request_references.sql','006_request_reference_tiers.sql']) await db.exec(await readFile('migrations/'+file,'utf8'));
+ await db.query("INSERT INTO inquiries(id,idempotency_key,payload_hash,payload) VALUES('brand','brand','hash',$1::jsonb)",[JSON.stringify(fixture())]);
+ const ref=async()=>(await db.query<{public_reference:string}>("SELECT public_reference FROM inquiries WHERE id='brand'")).rows[0].public_reference;
+ const old=await ref();const migration=await readFile('migrations/007_request_reference_brands.sql','utf8');await db.exec(migration);
+ assert.equal(await ref(),old.replace(/-([A-Z]{4})$/,'-RLX$1'));
+ assert.equal((await db.query('SELECT reference FROM request_reference_aliases WHERE reference=$1',[old])).rows.length,1);
+ const code=async(brands:string[])=>(await db.query<{code:string}>('SELECT request_brand_code($1::jsonb) AS code',[JSON.stringify({watches:brands.map(brand=>({brand}))})])).rows[0].code;
+ for(const [brand,expected] of [['Rolex','RLX'],['Patek Philippe','PP'],['Richard Mille','RM'],['Audemars Piguet','AP'],['F.P. Journe','FPJ'],['Vacheron Constantin','VC'],['Cartier','CAR'],['Open to guidance','UNK'],['','UNK'],['Independent maker','OTH']]) assert.equal(await code([brand]),expected);
+ assert.equal(await code(['Rolex','ROLEX']),'RLX');assert.equal(await code(['Rolex','Patek Philippe']),'MIX');assert.equal(await code(['Omega','Zenith']),'MIX');assert.equal(await code([]),'UNK');
+ const saved=await ref();await db.exec("UPDATE inquiries SET payload='{}'::jsonb WHERE id='brand'");
+ for(const file of ['004_request_references.sql','005_dated_request_references.sql','006_request_reference_tiers.sql','007_request_reference_brands.sql']) await db.exec(await readFile('migrations/'+file,'utf8'));
+ assert.equal(await ref(),saved);
+ await db.query("INSERT INTO inquiries(id,idempotency_key,payload_hash,payload) VALUES('brand-new','brand-new','hash',$1::jsonb)",[JSON.stringify({watches:[{brand:'Rolex',budget:'$15,000–$30,000'},{brand:'Patek Philippe',budget:'$15,000–$30,000'}]})]);
+ assert.match((await db.query<{public_reference:string}>("SELECT public_reference FROM inquiries WHERE id='brand-new'")).rows[0].public_reference,/^OMNI-WR\d{8}-BX\d{4,}-MIX[A-Z]{4}$/);
+ }finally{await db.close();}
+});

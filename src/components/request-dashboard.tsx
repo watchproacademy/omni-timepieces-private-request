@@ -1,4 +1,5 @@
 'use client';
+import {RequestProgress} from './request-progress';
 import {useState} from 'react';
 import {requestStages,requestStageLabels,reviewStates,type RequestStage} from '@/lib/request-workflow';
 export type PortalRecord={id:string;reference?:string;customer?:{name:string;email:string};watches:{id:string;title:string;stage:string;version:number;carrier:string;trackingNumber:string;trackingUrl:string;orderId?:string;lineId?:string;shopify?:{stage:string;payment:string}|null}[];review:{state:string;version:number;requirements:string[];form:{legalName?:string;address?:string;businessName?:string;relationship?:string;consent?:boolean}};notes:{id:string;author:string;visibility:string;body:string;created_at:string}[];files:{id:string;kind:string;created_at:string}[];events:{action:string;detail:{to?:string};created_at:string}[]};
@@ -13,8 +14,7 @@ export function RequestDashboard({request,owner,onSaved}:{request:PortalRecord;o
  return <div className="request-dashboard">
  <p className="tracking-reference">{request.reference || request.id}</p>{owner&&request.customer?<h2>{request.customer.name}</h2>:null}
  {message?<p role="status" className="tracking-message">{message}</p>:null}
- {request.watches.map(watch=><article className="tracking-watch" key={watch.id}><h2>{watch.title}</h2><p className="tracking-current">{requestStageLabels[watch.stage as RequestStage]||watch.stage}</p>
- <ol className="tracking-timeline" aria-label={`${watch.title} progress`}>{requestStages.map((stage,index)=><li key={stage} aria-current={watch.stage===stage?'step':undefined} data-complete={index<=requestStages.indexOf(watch.stage as RequestStage)}><span aria-hidden="true">{index+1}</span>{requestStageLabels[stage]}</li>)}</ol>
+ {request.watches.map(watch=><article className="tracking-watch" key={watch.id}><h2>{watch.title}</h2><RequestProgress title={watch.title} stage={watch.stage}/>
  {watch.trackingNumber?<p>{watch.carrier} · {watch.trackingNumber} {watch.trackingUrl?<a href={watch.trackingUrl} target="_blank" rel="noreferrer">Track shipment</a>:null}</p>:null}
  {owner?<><form className="portal-form" key={watch.version} onSubmit={event=>{event.preventDefault();const f=new FormData(event.currentTarget);void run(()=>post({action:'stage',requestId:request.id,watchId:watch.id,version:watch.version,stage:f.get('stage'),carrier:f.get('carrier'),trackingNumber:f.get('trackingNumber'),trackingUrl:f.get('trackingUrl')}));}}>
  <label>Update stage<select name="stage" defaultValue={watch.stage}>{[...requestStages,'waiting','cancelled'].map(stage=><option key={stage} value={stage}>{requestStageLabels[stage as RequestStage]||stage}</option>)}</select></label>
