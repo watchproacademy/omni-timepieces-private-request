@@ -10,12 +10,35 @@ export class ConciergeAudio {
     private nextBeat = 0;
     private voices = new Set<AudioBufferSourceNode>();
     private buffers: AudioBuffer[] = [];
+    private session: {type: string} | undefined;
+    private previousSessionType: string | undefined;
+    constructor(private readonly onInterrupted: () => void = () => {}) {}
+    private acquirePlayback() {
+        // Safari's default Web Audio session obeys the iPhone silent switch.
+        // Request media playback only in response to the explicit Sound tap.
+        try {
+            const session = (navigator as Navigator & {audioSession?: {type: string}}).audioSession;
+            if (session && !this.session) {
+                const previous = session.type;
+                session.type = 'playback';
+                this.session = session; this.previousSessionType = previous;
+            }
+        } catch { /* Older browsers retain their normal audio policy. */ }
+    }
+    private releasePlayback() {
+        try { if (this.session?.type === 'playback') this.session.type = this.previousSessionType || 'auto'; } catch { }
+        this.session = undefined; this.previousSessionType = undefined;
+    }
     async enable() {
         const generation = ++this.generation;
+        this.acquirePlayback();
         const AudioContextClass = window.AudioContext || (window as typeof window & { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
         if (!AudioContextClass) throw new Error('Audio is unavailable.');
         if (!this.context || this.context.state === 'closed') {
             this.context = new AudioContextClass();
+            this.context.onstatechange = () => {
+                if (this.enabled && this.context?.state !== 'running') { this.disable(); this.onInterrupted(); }
+            };
             this.master = this.context.createGain();
             this.master.gain.value = this.volume;
             this.master.connect(this.context.destination);
@@ -52,6 +75,7 @@ export class ConciergeAudio {
         for (const source of this.voices) { source.stop(); source.disconnect(); }
         this.voices.clear();
         void this.context?.suspend().catch(() => {});
+        this.releasePlayback();
     }
     // Interaction hooks stay silent so clicks cannot disrupt the clock rhythm.
     tick() {}
@@ -71,15 +95,22 @@ export class ConciergeAudio {
             for (const contact of contacts) {
                 const age = time - contact.at;
                 if (age < 0) continue;
-                const attack = Math.min(1, age / .00045);
-                const impact = softenedNoise * .58 * Math.exp(-age / .0017);
-                const metal = (.15 * Math.sin(2 * Math.PI * 2850 * pitch * age)
-                    + .09 * Math.sin(2 * Math.PI * 4370 * pitch * age)) * Math.exp(-age / .0032);
-                const body = .07 * Math.sin(2 * Math.PI * 1180 * pitch * age) * Math.exp(-age / .0045);
+                const attack = Math.min(1, age / .0012);
+                const impact = softenedNoise * .4 * Math.exp(-age / .0022);
+                const metal = (.12 * Math.sin(2 * Math.PI * 1750 * pitch * age)
+                    + .06 * Math.sin(2 * Math.PI * 2550 * pitch * age)) * Math.exp(-age / .0038);
+                const body = .11 * Math.sin(2 * Math.PI * 820 * pitch * age) * Math.exp(-age / .0055);
                 sample += contact.level * attack * (impact + metal + body);
             }
             // End at zero, without an abrupt cutoff or a long ringing tail.
             samples[i] = sample * (tock ? .94 : 1) * Math.min(1, (.032 - time) / .003);
+        }
+        // Keep each tiny contact audible at the same restrained level on phone
+        // speakers; the master remains low and the envelope stays soft.
+        const peak = samples.reduce((maximum, sample) => Math.max(maximum, Math.abs(sample)), 0);
+        if (peak > 0) {
+            const level = .28 * (tock ? .94 : 1) / peak;
+            for (let i = 0; i < samples.length; i++) samples[i] *= level;
         }
         return buffer;
     }

@@ -21,7 +21,7 @@ export function SoundProvider({ children }: { children: ReactNode }) {
     async function toggle() {
         const current = ++intent.current.version;
         if (enabled || loading) { engine.current?.disable(); setEnabled(false); setLoading(false); return; }
-        engine.current ||= new ConciergeAudio();
+        engine.current ||= new ConciergeAudio(() => { intent.current.version++; setEnabled(false); setLoading(false); });
         const audio = engine.current;
         setError(''); setLoading(true);
         try {
@@ -30,7 +30,7 @@ export function SoundProvider({ children }: { children: ReactNode }) {
             if (current !== intent.current.version) return;
             if (document.hidden) { audio.disable(); setEnabled(false); } else setEnabled(true);
         }
-        catch { if (current === intent.current.version) { setEnabled(false); setError('Sound could not start. Please try again.'); } }
+        catch { if (current === intent.current.version) { audio.disable(); setEnabled(false); setError('Sound could not start. Please try again.'); } }
         finally { if (current === intent.current.version) setLoading(false); }
     }
     return <SoundContext.Provider value={{ enabled, loading, error, toggle: () => void toggle(), tick }}>{children}</SoundContext.Provider>;

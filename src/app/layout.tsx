@@ -1,4 +1,4 @@
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 import { headers } from 'next/headers';
 import { config } from '@/lib/config';
 import { WatchMovement } from '@/components/watch-movement';
@@ -10,6 +10,7 @@ import '@/styles/app.css';
 import '@/styles/atmosphere.css';
 import '@/styles/editorial.css';
 import '@/styles/interactions.css';
+export const viewport: Viewport = { width: 'device-width', initialScale: 1, viewportFit: 'cover' };
 export const metadata: Metadata = { metadataBase: new URL(config.siteUrl), title: { default: `${config.name} — Private request`, template: `%s | ${config.name}` }, icons: { icon: '/favicon.svg' } };
 export default async function RootLayout({ children }: {
     children: React.ReactNode;

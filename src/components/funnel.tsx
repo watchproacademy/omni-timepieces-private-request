@@ -18,7 +18,7 @@ import { WatchRequests } from './watch-requests';
 const WatchDetails = dynamic(() => import('./watch-details').then(module => module.WatchDetails));
 const TradeEditor = dynamic(() => import('./trade-editor').then(module => module.TradeEditor));
 const RequestReview = dynamic(() => import('./request-review').then(module => module.RequestReview));
-function RequestFunnel() {
+function RequestFunnel({active}: {active: boolean}) {
     const { state, dispatch, ready, draftStatus } = useRequest();
     const config = useConfiguration();
     const [error, setError] = useState('');
@@ -26,6 +26,7 @@ function RequestFunnel() {
     const [direction, setDirection] = useState('forward');
     const { tick } = useSound();
     const advanceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+    useEffect(() => { if (!active && advanceTimer.current) { clearTimeout(advanceTimer.current); advanceTimer.current = null; } }, [active]);
     const latest = useRef(state);
     useEffect(() => { latest.current = state; }, [state]);
     useEffect(() => () => { if (advanceTimer.current) clearTimeout(advanceTimer.current); }, [state.step, state.activeWatchId]);
@@ -36,10 +37,10 @@ function RequestFunnel() {
     const website = useRef<HTMLInputElement>(null);
     const watch = state.watches.find(w => w.id === state.activeWatchId) || state.watches[0];
     const step = steps[state.step];
-    useEffect(() => { if (ready) {
+    useEffect(() => { if (ready && active) {
         heading.current?.focus();
         track('private_request_step_viewed', { step: state.step + 1 });
-    } }, [state.step, state.activeWatchId, ready, state.accepted]);
+    } }, [state.step, state.activeWatchId, ready, state.accepted, active]);
     function cancelAdvance() { if (advanceTimer.current) clearTimeout(advanceTimer.current); advanceTimer.current = null; }
     function scheduleAdvance(automatic: boolean) {
         cancelAdvance(); setError(''); setErrors({});
@@ -193,4 +194,4 @@ function RequestFunnel() {
  <div className="form-nav"><button className="quiet-button" type="button" disabled={state.step === 0 || state.status === 'submitting'} onClick={back}>← Back</button><span className="save-note">Saved for this session</span><button className="primary" type="submit" disabled={!ready || state.status === 'submitting'} aria-busy={state.status === 'submitting'}>{state.status === 'submitting' ? 'Saving…' : step.id === 'review' ? 'Send private request' : state.reviewReturn ? 'Save and return to review' : 'Continue →'}</button></div>
  </fieldset></form></section>;
 }
-export function Funnel() { return <RequestProvider><RequestFunnel /></RequestProvider>; }
+export function Funnel({active = true}: {active?: boolean}) { return <RequestProvider><RequestFunnel active={active} /></RequestProvider>; }
