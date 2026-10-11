@@ -43,3 +43,9 @@ Production deployment provisioning and gateway verification remain a release gat
 ### Operator request filters
 
 Lists are server-filtered before pagination (50 per page), with matching counts. Dates use America/New_York, calendar weeks begin Monday, and past 14 days includes today. Custom dates are inclusive. Search matches customer name, public reference and all watches. Stage matches any watch in a multi-watch inquiry. Needs attention means submitted/in-review documents, an unpaid invoice stage, or a latest customer-visible message from the customer; internal notes do not count as a reply. All dates includes all retained inquiries, not purged records.
+
+### Custom staff address (prepared 2026-10-11)
+
+`private-desk.omnitimepieces.com` is assigned and ownership-verified on the staff project. Authoritative DNS is Bluehost; the required new CNAME host is `private-desk`, pointing to `19deaf2a3240b56a.vercel-dns-017.com`. DNS is not yet configured. Preserve all existing storefront and email records.
+
+Internal deployments rewrite `/` to the protected `/private-desk` page. This preserves the original host guard and does not change customer routing. Keep the current internal origin until DNS and HTTPS work; then set Preview `INTERNAL_PORTAL_URL` to the new HTTPS origin, redeploy staging, assign the custom alias, and verify anonymous page/API denial before enrollment. Do not promote or connect production data as part of this hostname change. The new hostname requires a new device passkey and one-time enrollment code.
