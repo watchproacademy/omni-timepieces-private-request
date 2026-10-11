@@ -62,8 +62,8 @@ export async function POST(request:Request) {
  const session=await issueAccess(access.role,access.inquiry_id,true);
  return reply({ok:true},200,{'Set-Cookie':`${trackingCookie}=${session}; Path=/api/request-status; HttpOnly; SameSite=Strict; Max-Age=3600${process.env.NODE_ENV==='production'?'; Secure':''}`});
  }
- const access=await accessFor(request);if(!access)return reply({message:'Please sign in again.'},401);
  if(input.action==='logout'){await revokeAccess(request);return reply({ok:true},200,{'Set-Cookie':`${trackingCookie}=; Path=/api/request-status; HttpOnly; SameSite=Strict; Max-Age=0${process.env.NODE_ENV==='production'?'; Secure':''}`});}
+ const access=await accessFor(request);if(!access)return reply({message:'Please sign in again.'},401);
  if(access.role!=='owner')return reply({message:'Owner access required.'},403);
  if(input.action==='order'){
  const orderInput=z.object({requestId:z.string().min(1).max(100),orderId:z.string().regex(/^gid:\/\/shopify\/Order\/\d+$/)}).safeParse(input);

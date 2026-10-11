@@ -9,6 +9,9 @@ export function documentType(bytes:Buffer) {
 /** Delete private objects before their database rows can disappear with an inquiry. */
 export async function purgePortalFiles() {
  const sql=database();
+ await sql.query("DELETE FROM admin_security_events WHERE created_at<now()-interval '90 days'");
+ await sql.query("DELETE FROM admin_challenges WHERE expires_at<=now()");
+ await sql.query("DELETE FROM admin_enrollment WHERE expires_at<=now()");
  await sql.query("UPDATE request_files SET state='deleting' WHERE expires_at<=now() OR (state='pending' AND created_at<now()-interval '1 hour')");
  const files=await sql.query("SELECT id,pathname FROM request_files WHERE state='deleting' LIMIT 100");
  for(const file of files){await del(file.pathname);await sql.query("DELETE FROM request_files WHERE id=$1 AND state='deleting'",[file.id]);}

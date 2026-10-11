@@ -39,7 +39,7 @@ export function RequestDashboard({request,owner,onSaved}:{request:PortalRecord;o
  <button className="primary" disabled={busy}>Submit for review</button></form></>:<p>We’ll email you when documents or additional information are needed.</p>}
  </section>
  <section className="portal-section"><h2>Documents & invoices</h2><p>PDF, JPG, or PNG · Up to 3 MB per file. Documents are retained for one year from upload and are accessible only through the private dashboard.</p>
- {owner?<p className="tracking-sync">Uploads are not automatically malware-scanned. Open only expected documents using your device’s security protections.</p>:null}
+ {owner?<p className="tracking-sync">Files are checked by Cloudmersive before acceptance. If scanning is unavailable or a threat is detected, the upload is blocked. Existing files are scanned before their first download.</p>:null}
  {owner?<Upload id={request.id} kind="invoice" onSaved={onSaved}/>:null}
  {request.files.length?<ul>{request.files.map(file=><li key={file.id}><a href={`/api/request-status/files?id=${encodeURIComponent(request.id)}&file=${encodeURIComponent(file.id)}`}>{titles[file.kind]} · {new Date(file.created_at).toLocaleDateString()}</a></li>)}</ul>:<p>No documents yet.</p>}</section>
  <section className="portal-section"><h2>{owner?'Messages & internal notes':'Messages with your private desk'}</h2>

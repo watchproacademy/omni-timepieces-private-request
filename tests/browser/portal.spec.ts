@@ -53,3 +53,12 @@ test('linear progress advances per watch and handles completion and paused reque
  stage='waiting';await page.getByRole('button',{name:'Refresh updates'}).click();await expect(page.getByText('On hold',{exact:true})).toBeVisible();await expect(progress).toHaveCount(0);
  stage='cancelled';await page.getByRole('button',{name:'Refresh updates'}).click();await expect(page.getByText('Request cancelled',{exact:true})).toBeVisible();await expect(progress).toHaveCount(0);
 });
+
+test('email-only admin session must complete the passkey gate before seeing requests',async({page})=>{
+ test.skip(process.env.REQUEST_PORTAL_ENABLED!=='true');
+ await page.route('**/api/request-status/portal**',route=>route.fulfill({status:401,json:{message:'Sign in'}}));
+ await page.route('**/api/request-status/admin',route=>route.fulfill({json:{required:true,enrolled:true}}));
+ await page.goto('/private-desk');await expect(page.getByRole('button',{name:'Verify with passkey'})).toBeVisible();
+ await expect(page.getByRole('heading',{name:'Recent requests'})).toHaveCount(0);
+ await expect(page.getByLabel('Update stage')).toHaveCount(0);
+});
