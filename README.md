@@ -160,7 +160,7 @@ checks (PDF/JPEG/PNG), 3 MB each and 20 files per request. No inline previews or
 automatic malware scan are provided. The operator should only open expected
 files with appropriate device protection. Files are not included in emails.
 Pending upload reservations are cleaned after one hour; completed files are
-retained 365 days from upload. Request retention extends to cover those files.
+retained one calendar year from upload. Request retention extends to cover those files.
 Cleanup deletes objects before metadata, and blocks parent deletion while files
 remain. A database trigger protects retained inquiries from the older 90-day
 cleanup path. Retention settings are business choices, not legal determinations.
@@ -170,3 +170,5 @@ uploads or downloads. No paid upgrade is automatic or authorized.
 Use synthetic documents only in tests. Before enabling production, verify both
 roles, cross-request denial, upload/download, incomplete and approved KYC,
 shipping rejection before approval, notification delivery, and expiry cleanup.
+
+Portal release gate: production document collection remains disabled pending confirmation of the Florida retention schedule. Buyer verification, secondhand acquisition/trade-in records, and invoices must not be assumed to share one legal retention period. The preview one-year expiry is a test configuration, not a compliance determination.

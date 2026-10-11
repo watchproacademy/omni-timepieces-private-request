@@ -50,6 +50,8 @@ test('provider adapters use independent recipient and deduplication keys; failur
  globalThis.fetch=async(_input,init)=>{sent.push({headers:new Headers(init?.headers),body:JSON.parse(String(init?.body))});return Response.json({id:'provider-test'});};
  const owner=worker();const receipt=worker({kind:'receipt',id:'WR-TEST:receipt'});await deliver(owner.job);await deliver(receipt.job);
  assert.deepEqual(sent[0].body.to,['owner@example.com']);assert.deepEqual(sent[1].body.to,['test@example.com']);assert.equal(sent[0].headers.get('idempotency-key'),'WR-TEST:owner');assert.equal(sent[1].headers.get('idempotency-key'),'WR-TEST:receipt');
+ const update=worker({kind:'update',id:'event:customer',event:{title:'Review update',message:'<private>'}});const operator=worker({kind:'operator_update',id:'event:owner'});await deliver(update.job);await deliver(operator.job);
+ assert.deepEqual(sent[2].body.to,['test@example.com']);assert.deepEqual(sent[3].body.to,['owner@example.com']);assert.match(String(sent[2].body.html),/&lt;private&gt;/);assert.match(String(sent[2].body.text),/\/request-status/);assert.match(String(sent[3].body.text),/\/private-desk/);assert.equal(sent[2].headers.get('idempotency-key'),'event:customer');
  globalThis.fetch=async()=>{throw new DOMException('Timed out','TimeoutError');};await assert.rejects(deliver(owner.job),e=>e instanceof DeliveryError&&e.ambiguous&&e.retryable);
  globalThis.fetch=async()=>new Response('',{status:429});await assert.rejects(deliver(owner.job),e=>e instanceof DeliveryError&&e.retryable);
  globalThis.fetch=async()=>new Response('',{status:403});await assert.rejects(deliver(owner.job),e=>e instanceof DeliveryError&&!e.retryable);
