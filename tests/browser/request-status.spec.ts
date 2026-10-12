@@ -14,7 +14,7 @@ test('private email link is removed from the address and customer progress never
  if(await page.getByText('Request tracking is being prepared.',{exact:false}).isVisible()){test.skip(true,'Tracking disabled in the standard deployment; enabled suite runs separately.');return;}
  await expect(page.getByRole('button',{name:'Open private request',exact:true})).toBeVisible();await expect(page).toHaveURL(/\/request-status$/);
  await page.getByRole('button',{name:'Open private request',exact:true}).click();await expect(page.getByRole('heading',{name:'Rolex Daytona'})).toBeVisible();
- await expect(page.locator('.tracking-timeline li').filter({hasText:'Paid'})).toHaveAttribute('data-complete','false');
+ await expect(page.getByRole('progressbar',{name:'Rolex Daytona request progress'})).toHaveAttribute('aria-valuenow','5');await page.getByText('View all stages',{exact:true}).click();await expect(page.locator('.request-progress-details li').filter({hasText:'Paid'})).toHaveAttribute('data-reached','false');
  await expect(page.getByText('Update this watch',{exact:true})).toHaveCount(0);
  await page.getByRole('button',{name:'Sign out',exact:true}).click();await expect(page.getByRole('button',{name:'Email my private link'})).toBeVisible();
 });
