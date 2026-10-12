@@ -12,11 +12,11 @@ test('customer dashboard exposes requested documents and messages, without opera
 });
 test('operator can independently record shipping and internal notes',async({page})=>{
  test.skip(process.env.REQUEST_PORTAL_ENABLED!=='true'||process.env.OMNI_PORTAL_MODE!=='internal','Requires the separately protected internal deployment');let update:Record<string,unknown>|undefined;
- await page.route('**/api/request-status/portal**',async route=>{if(route.request().method()==='POST'){update=route.request().postDataJSON();await route.fulfill({json:{ok:true}});}else await route.fulfill({json:{role:'owner',request:{...record,review:{...record.review,state:'approved'}}}});});
+ await page.route('**/api/request-status/portal**',async route=>{if(route.request().method()==='POST'){update=route.request().postDataJSON();await route.fulfill({json:{ok:true}});}else if(new URL(route.request().url()).searchParams.has('page'))await route.fulfill({json:{role:'owner',requests:[],total:0,page:1,pageSize:50}});else await route.fulfill({json:{role:'owner',request:{...record,review:{...record.review,state:'approved'}}}});});
  await page.goto('/private-desk');await page.getByLabel('Update stage').selectOption('shipped');await page.getByText('Shipping details',{exact:true}).click();
  await page.getByLabel('Carrier',{exact:true}).fill('UPS');await page.getByLabel('Tracking number',{exact:true}).fill('SYNTHETIC-123');
  await page.getByRole('button',{name:'Save stage & notify customer'}).click();await expect.poll(()=>update?.stage).toBe('shipped');
- await page.getByLabel('Visibility').selectOption('internal');await page.getByLabel('New message or note').fill('Internal test');await page.getByRole('button',{name:'Send message'}).click();await expect.poll(()=>update?.visibility).toBe('internal');
+ await page.getByRole('button',{name:/^Messages \(/}).click();await page.getByLabel('Visibility').selectOption('internal');await page.getByLabel('New message or note').fill('Internal test');await page.getByRole('button',{name:'Save internal note'}).click();await expect.poll(()=>update?.visibility).toBe('internal');
 });
 test('document upload rejects oversized files before transmission',async({page})=>{
  test.skip(process.env.REQUEST_PORTAL_ENABLED!=='true');let uploads=0;
