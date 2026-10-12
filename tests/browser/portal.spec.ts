@@ -59,7 +59,7 @@ test('public customer portal exposes no operator entry point',async({page})=>{
  await page.route('**/api/request-status/portal**',route=>route.fulfill({status:401,json:{message:'Sign in'}}));
  await page.route('**/api/request-status',route=>route.fulfill({status:401,json:{message:'Sign in'}}));
  await page.goto('/request-status');
- await expect(page.getByLabel('Request reference')).toBeVisible();
+ if(process.env.REQUEST_TRACKING_ENABLED==='true')await expect(page.getByLabel('Request reference')).toBeVisible();else await expect(page.getByText(/Request tracking is being prepared/)).toBeVisible();
  await expect(page.getByRole('button',{name:'Private desk sign-in'})).toHaveCount(0);
  const response=await page.goto('/private-desk');expect(response?.status()).toBe(404);
  await expect(page.getByRole('button',{name:'Email my private link'})).toHaveCount(0);
