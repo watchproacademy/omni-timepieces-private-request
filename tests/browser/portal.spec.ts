@@ -73,3 +73,19 @@ test('operator filters dates, stages and attention on the server',async({page})=
  await expect.poll(()=>last).toContain('period=fortnight');await expect.poll(()=>last).toContain('attention=unpaid');await expect(page.getByText('51 matching requests')).toBeVisible();await page.getByRole('button',{name:'Next',exact:true}).click();await expect.poll(()=>last).toContain('page=2');
  await page.getByRole('button',{name:'Refresh updates',exact:true}).click();await expect.poll(()=>last).toContain('page=2');await expect.poll(()=>last).toContain('attention=unpaid');await expect(page.getByText('51 matching requests')).toBeVisible();
 });
+
+test('customer stage guidance hides unrequested review and empty documents',async({page})=>{
+ test.skip(process.env.REQUEST_PORTAL_ENABLED!=='true');
+ let review='not_requested';let stage='sourcing';
+ await page.route('**/api/request-status/portal**',route=>route.fulfill({json:{role:'customer',request:{...record,watches:[{...record.watches[0],stage}],review:{...record.review,state:review}}}}));
+ await page.goto('/request-status');
+ await expect(page.getByRole('heading',{name:'We’re sourcing your watch'})).toBeVisible();
+ await expect(page.getByRole('heading',{name:'Transaction review',exact:true})).toHaveCount(0);
+ await expect(page.getByRole('heading',{name:'Documents & invoices'})).toHaveCount(0);
+ await expect(page.getByLabel('Add a message')).toBeVisible();
+ stage='quote_sent';await page.getByRole('button',{name:'Refresh updates'}).click();
+ await expect(page.getByRole('heading',{name:'Your quote is ready to review'})).toBeVisible();
+ review='requested';stage='verification';await page.getByRole('button',{name:'Refresh updates'}).click();
+ await expect(page.getByRole('heading',{name:'Transaction review',exact:true})).toBeVisible();
+ await expect(page.getByLabel('Upload identity document')).toBeVisible();
+});

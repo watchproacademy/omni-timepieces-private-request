@@ -1,4 +1,5 @@
 'use client';
+import {guidanceForStage} from '@/lib/stage-guidance';
 import {RequestProgress} from './request-progress';
 import {useState} from 'react';
 import {requestStages,requestStageLabels,reviewStates,type RequestStage} from '@/lib/request-workflow';
@@ -10,20 +11,21 @@ export function RequestDashboard({request,owner,onSaved}:{request:PortalRecord;o
  const [busy,setBusy]=useState(false),[message,setMessage]=useState('');
  const [noteKey,setNoteKey]=useState(()=>crypto.randomUUID());
  async function run(action:()=>Promise<void>){setBusy(true);setMessage('');try{await action();await onSaved();setMessage('Saved.');}catch(error){setMessage(error instanceof Error?error.message:'Please retry.');}finally{setBusy(false);}}
+ const showReview=owner||request.review.state!=='not_requested';
  const canSubmit=['requested','changes_requested'].includes(request.review.state);
  return <div className="request-dashboard">
  <p className="tracking-reference">{request.reference || request.id}</p>{owner&&request.customer?<h2>{request.customer.name}</h2>:null}
  {message?<p role="status" className="tracking-message">{message}</p>:null}
- {request.watches.map(watch=><article className="tracking-watch" key={watch.id}><h2>{watch.title}</h2><RequestProgress title={watch.title} stage={watch.stage}/>
- {watch.trackingNumber?<p>{watch.carrier} · {watch.trackingNumber} {watch.trackingUrl?<a href={watch.trackingUrl} target="_blank" rel="noreferrer">Track shipment</a>:null}</p>:null}
+ {request.watches.map(watch=><article className="tracking-watch" key={watch.id}><h2>{watch.title}</h2><RequestProgress title={watch.title} stage={watch.stage}/><div className="stage-guidance"><h3>{guidanceForStage(watch.stage)[0]}</h3><p>{guidanceForStage(watch.stage)[1]}</p><p className="tracking-sync">{!owner&&canSubmit?'Please complete the requested information in Transaction review below.':watch.stage==='verification'&&!showReview?'We’ll notify you if information or documents are needed.':guidanceForStage(watch.stage)[2]}</p></div>
+ {watch.trackingNumber&&(owner||['shipped','delivered'].includes(watch.stage))?<p>{watch.carrier} · {watch.trackingNumber} {watch.trackingUrl?<a href={watch.trackingUrl} target="_blank" rel="noreferrer">Track shipment</a>:null}</p>:null}
  {owner?<><form className="portal-form" key={watch.version} onSubmit={event=>{event.preventDefault();const f=new FormData(event.currentTarget);void run(()=>post({action:'stage',requestId:request.id,watchId:watch.id,version:watch.version,stage:f.get('stage'),carrier:f.get('carrier'),trackingNumber:f.get('trackingNumber'),trackingUrl:f.get('trackingUrl')}));}}>
  <label>Update stage<select name="stage" defaultValue={watch.stage}>{[...requestStages,'waiting','cancelled'].map(stage=><option key={stage} value={stage}>{requestStageLabels[stage as RequestStage]||stage}</option>)}</select></label>
  <details><summary>Shipping details</summary><label>Carrier<input name="carrier" defaultValue={watch.carrier} maxLength={100}/></label><label>Tracking number<input name="trackingNumber" defaultValue={watch.trackingNumber} maxLength={150}/></label><label>Secure tracking link<input name="trackingUrl" type="url" defaultValue={watch.trackingUrl} maxLength={2000}/></label></details>
  <p className="tracking-sync">Shipping requires an approved transaction review. Recording payment here does not charge the customer.</p><button className="primary" disabled={busy}>Save stage & notify customer</button></form>
  <ShopifyConnection requestId={request.id} watch={watch} onSaved={onSaved}/></>:null}
  </article>)}
- <section className="portal-section"><h2>Transaction review</h2><p className="tracking-current">{reviewLabels[request.review.state]}</p><p>Our KYC team reviews the transaction before shipment. Documents are retained for one year from upload. Never upload card numbers, passwords, or unrelated documents.</p>
- <p>Requested: {request.review.requirements.map(kind=>titles[kind]).join(', ')}. For identity, provide an ID card, driver’s license, or passport.</p>
+ {showReview?<section className="portal-section"><h2>Transaction review</h2><p className="tracking-current">{reviewLabels[request.review.state]}</p><p>Our KYC team reviews the transaction before shipment. Documents are retained for one year from upload. Never upload card numbers, passwords, or unrelated documents.</p>
+ {request.review.state!=='not_requested'?<p>Requested: {request.review.requirements.map(kind=>titles[kind]).join(', ')}. For identity, provide an ID card, driver’s license, or passport.</p>:null}
  {owner?<form className="portal-form" key={request.review.version} onSubmit={event=>{event.preventDefault();const f=new FormData(event.currentTarget);void run(()=>post({action:'review',requestId:request.id,state:f.get('state'),requirements:f.getAll('requirements'),reviewed:f.get('reviewed')==='on',version:request.review.version}));}}>
  <fieldset><legend>Documents required for this transaction</legend>{['identity','address','business'].map(kind=><label className="portal-check" key={kind}><input type="checkbox" name="requirements" value={kind} defaultChecked={request.review.requirements.includes(kind)}/>{titles[kind]}</label>)}</fieldset>
  <label>Review decision<select name="state" defaultValue={request.review.state}>{reviewStates.map(s=><option value={s} key={s} disabled={s==='submitted'}>{reviewLabels[s]}</option>)}</select></label>
@@ -37,11 +39,11 @@ export function RequestDashboard({request,owner,onSaved}:{request:PortalRecord;o
  <label>Business name, if applicable<input name="businessName" maxLength={200} defaultValue={request.review.form.businessName}/></label>
  <label className="portal-check"><input type="checkbox" name="consent" required/>I confirm these details are accurate and authorize Omni’s KYC team to review the documents for this transaction.</label>
  <button className="primary" disabled={busy}>Submit for review</button></form></>:<p>We’ll email you when documents or additional information are needed.</p>}
- </section>
- <section className="portal-section"><h2>Documents & invoices</h2><p>PDF, JPG, or PNG · Up to 3 MB per file. Documents are retained for one year from upload and are accessible only through the private dashboard.</p>
+ </section>:null}
+ {owner||request.files.length>0?<section className="portal-section"><h2>Documents & invoices</h2><p>PDF, JPG, or PNG · Up to 3 MB per file. Documents are retained for one year from upload and are accessible only through the private dashboard.</p>
  {owner?<p className="tracking-sync">Files are checked by Cloudmersive before acceptance. If scanning is unavailable or a threat is detected, the upload is blocked. Existing files are scanned before their first download.</p>:null}
  {owner?<Upload id={request.id} kind="invoice" onSaved={onSaved}/>:null}
- {request.files.length?<ul>{request.files.map(file=><li key={file.id}><a href={`/api/request-status/files?id=${encodeURIComponent(request.id)}&file=${encodeURIComponent(file.id)}`}>{titles[file.kind]} · {new Date(file.created_at).toLocaleDateString()}</a></li>)}</ul>:<p>No documents yet.</p>}</section>
+ {request.files.length?<ul>{request.files.map(file=><li key={file.id}><a href={`/api/request-status/files?id=${encodeURIComponent(request.id)}&file=${encodeURIComponent(file.id)}`}>{titles[file.kind]} · {new Date(file.created_at).toLocaleDateString()}</a></li>)}</ul>:<p>No documents yet.</p>}</section>:null}
  <section className="portal-section"><h2>{owner?'Messages & internal notes':'Messages with your private desk'}</h2>
  <div className="portal-messages">{request.notes.map(note=><article key={note.id}><strong>{note.author==='owner'?'Private desk':'Customer'}{note.visibility==='internal'?' · Internal only':''}</strong><p>{note.body}</p><small>{new Date(note.created_at).toLocaleString()}</small></article>)}</div>
  <form className="portal-form" onSubmit={event=>{event.preventDefault();const form=event.currentTarget,f=new FormData(form);void run(async()=>{await post({action:'note',requestId:request.id,body:f.get('body'),visibility:f.get('visibility')||'customer',key:noteKey});setNoteKey(crypto.randomUUID());form.reset();});}}><label>{owner?'New message or note':'Add a message'}<textarea name="body" required maxLength={3000}/></label>{owner?<label>Visibility<select name="visibility"><option value="customer">Visible to customer — email notification</option><option value="internal">Internal operator note only</option></select></label>:null}<button className="primary" disabled={busy}>Send message</button></form></section>
