@@ -53,7 +53,7 @@ export async function POST(request:Request) {
  if(matches){
  const token=await issueAccess(v.role,v.role==='owner'?null:matched!.id);
  const destination=v.role==='owner'?operatorPortalUrl():customerPortalUrl();if(!destination)throw new Error('email link unavailable');
- const link=`${destination}#access=${token}`;
+ const linkUrl=new URL(destination);if(v.role==='owner'&&v.requestId.trim()){linkUrl.searchParams.set('request',v.requestId.trim());linkUrl.searchParams.set('section','messages');}linkUrl.hash=`access=${token}`;const link=linkUrl.href;
  const result=await fetch('https://api.resend.com/emails',{method:'POST',headers:{Authorization:`Bearer ${process.env.RESEND_API_KEY}`,'Content-Type':'application/json','Idempotency-Key':'tracking:'+tokenHash(token)},body:JSON.stringify({from:brandedEmailSender(process.env.WATCH_REQUEST_FROM_EMAIL),to:[email],...accessEmail(v.role,link,v.requestId.trim())}),signal:AbortSignal.timeout(10000)});
  if(!result.ok)throw new Error('email unavailable');
  }

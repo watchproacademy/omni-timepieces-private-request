@@ -22,7 +22,7 @@ export async function deliver(job: DeliveryJob) {
     const reference = job.public_reference || job.inquiry_id;
     const receipt = job.kind === 'receipt' || job.kind === 'update';
     const update = job.kind === 'update' || job.kind === 'operator_update';
-    const message=update?updateEmail(reference,job.event,job.kind==='operator_update'):emailFor(job.payload,reference,job.kind as 'owner'|'receipt');
+    const message=update?updateEmail(reference,job.event,job.kind==='operator_update',{customer:job.payload.contact,requestId:job.inquiry_id}):emailFor(job.payload,reference,job.kind as 'owner'|'receipt');
     const response = await providerFetch('https://api.resend.com/emails', { method: 'POST', headers: { Authorization: `Bearer ${process.env.RESEND_API_KEY}`, 'Content-Type': 'application/json', 'Idempotency-Key': job.id }, body: JSON.stringify({ from: brandedEmailSender(process.env.WATCH_REQUEST_FROM_EMAIL), to: receipt ? [job.payload.contact.email] : process.env.WATCH_REQUEST_TO_EMAIL!.split(',').map(v => v.trim()), reply_to: receipt ? (process.env.WATCH_REQUEST_REPLY_TO_EMAIL || process.env.WATCH_REQUEST_TO_EMAIL?.split(',')[0]) : job.payload.contact.email, ...message }) });
     if (!response.ok)
         throw new DeliveryError(`resend_${response.status}`, response.status === 429 || response.status >= 500, response.status >= 500);
