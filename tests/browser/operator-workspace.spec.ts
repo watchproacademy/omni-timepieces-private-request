@@ -18,7 +18,7 @@ test('operator workspace retains filters, saves fresh versions, recovers errors,
   listUrl=url.href;return route.fulfill({json:{role:'owner',requests:[row,{...row,id:'DEMO-TWO',name:'Second demo customer',reference:'OMNI-DEMO-TWO'}],total:2,page:1,pageSize:50}});
  });
  await page.goto('/private-desk');await expect(page.getByRole('heading',{name:'Request queue'})).toBeVisible();
- await page.getByLabel('Search requests').fill('Demo');await page.getByLabel('Date received').selectOption('week');await page.getByRole('button',{name:'Apply filters'}).click();await expect.poll(()=>listUrl).toContain('period=week');
+ await page.getByLabel('Search requests').fill('Demo');await page.getByText('Date, stage & attention',{exact:true}).click();await page.getByLabel('Date received').selectOption('week');await page.getByRole('button',{name:'Apply filters'}).click();await expect.poll(()=>listUrl).toContain('period=week');
  await page.getByRole('button',{name:/^Demo customer/}).click();await expect(page.getByRole('heading',{name:'Rolex Submariner',exact:true})).toBeVisible();
  await expect(page.getByText('Your request is with us')).toHaveCount(0);await expect(page.getByText('Nothing is needed from you right now.')).toHaveCount(0);
  const save=page.getByRole('button',{name:'Save stage & notify customer'});

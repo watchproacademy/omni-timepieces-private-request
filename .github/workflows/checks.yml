@@ -47,7 +47,7 @@ jobs:
           REQUEST_TRACKING_ENABLED: 'true'
           REQUEST_PORTAL_ENABLED: 'true'
       - name: Verify internal operator workspace
-        run: pnpm test:browser tests/browser/operator-workspace.spec.ts tests/browser/request-editor.spec.ts tests/browser/portal.spec.ts --project=${{ matrix.browser }}
+        run: pnpm test:browser tests/browser/operator-workspace.spec.ts tests/browser/request-editor.spec.ts tests/browser/request-priority.spec.ts tests/browser/portal.spec.ts --project=${{ matrix.browser }}
         env:
           REQUEST_TRACKING_ENABLED: 'true'
           REQUEST_PORTAL_ENABLED: 'true'

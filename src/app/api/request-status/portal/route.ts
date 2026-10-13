@@ -22,7 +22,7 @@ export async function POST(request:Request){
  const parsed=portalMutation.safeParse(JSON.parse((await limitedBody(request,30000)).toString()));if(!parsed.success)throw new Error('INVALID_INPUT');
  const access=await portalAccess(request,parsed.data.requestId);await portalLimit(request);
  const result=await portalMutate(request,parsed.data,access);
- if(parsed.data.action==='request_edit')return portalReply({ok:true,...result});
+ if(['request_edit','priority'].includes(parsed.data.action))return portalReply({ok:true,...result});
  after(async()=>{try{await publishPending(parsed.data.requestId);return;}catch{console.error('portal_queue_pending');}for(const id of await pendingJobIds(parsed.data.requestId)){try{await processDelivery(id);}catch{console.error('portal_email_pending');}}});
  return portalReply({ok:true});
  }catch(error){return portalError(error);}

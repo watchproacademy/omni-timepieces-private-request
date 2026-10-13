@@ -1,8 +1,9 @@
 import {z} from 'zod';
-import {watchSchema,contactSchema} from './validation';
+import {watchSchemaForTimeline,contactSchema,legacyPhoneSchema} from './validation';
+import {timelineRule} from './request-priority';
 import {config} from './config';
-export const detailContactSchema=z.object({fullName:contactSchema.shape.fullName,phone:contactSchema.shape.phone,location:contactSchema.shape.location,preferredContact:contactSchema.shape.preferredContact}).strict().superRefine((contact,ctx)=>{if(contact.preferredContact!=='Email'&&!contact.phone)ctx.addIssue({code:'custom',path:['phone'],message:'Add a phone number for the preferred contact method.'});});
-export const requestDetailsSchema=z.object({watches:z.array(watchSchema.strict()).min(1).max(config.maxWatches),contact:detailContactSchema,conditionNotes:z.string().trim().max(3000),inspirationUrl:z.string().trim().max(2000).refine(value=>{if(!value)return true;try{const u=new URL(value);return ['https:','http:'].includes(u.protocol)&&!u.username&&!u.password;}catch{return false;}},'Use an http or https link.')}).strict().superRefine((details,ctx)=>{if(new Set(details.watches.map(w=>w.id)).size!==details.watches.length)ctx.addIssue({code:'custom',path:['watches'],message:'Each watch must retain its own identifier.'});});
+export const detailContactSchema=z.object({fullName:contactSchema.shape.fullName,phone:legacyPhoneSchema,location:contactSchema.shape.location,preferredContact:contactSchema.shape.preferredContact}).strict();
+export const requestDetailsSchema=z.object({watches:z.array(watchSchemaForTimeline(z.string().trim().max(150).refine(v=>!!timelineRule(v),'Choose a supported acquisition timeline.')).strict()).min(1).max(config.maxWatches),contact:detailContactSchema,conditionNotes:z.string().trim().max(3000),inspirationUrl:z.string().trim().max(2000).refine(value=>{if(!value)return true;try{const u=new URL(value);return ['https:','http:'].includes(u.protocol)&&!u.username&&!u.password;}catch{return false;}},'Use an http or https link.')}).strict().superRefine((details,ctx)=>{if(new Set(details.watches.map(w=>w.id)).size!==details.watches.length)ctx.addIssue({code:'custom',path:['watches'],message:'Each watch must retain its own identifier.'});});
 export type RequestDetails=z.infer<typeof requestDetailsSchema>;
 export type DetailChange={path:string;watchId?:string;before:unknown;after:unknown};
 export function editableWatchDetails(watch:Record<string,unknown>):RequestDetails['watches'][number] {

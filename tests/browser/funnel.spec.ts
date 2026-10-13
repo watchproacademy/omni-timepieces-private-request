@@ -17,9 +17,14 @@ async function watch(page: Page, brand='Rolex',model='Daytona') {
  await expect(page.getByRole('heading',{name:'Would you like to trade a watch?'})).toBeVisible();
 }
 async function contact(page: Page) {
- await page.getByLabel('Full name',{exact:true}).fill('Test Client');await page.getByRole('textbox',{name:'Email',exact:true}).fill('test@example.com');await page.getByLabel('City / country',{exact:true}).fill('Miami, USA');await choose(page,'Email');
+ await page.getByLabel('Full name',{exact:true}).fill('Test Client');await page.getByRole('textbox',{name:'Email',exact:true}).fill('test@example.com');await page.getByRole('textbox',{name:'Phone',exact:true}).fill('+1 202 555 0100');await page.getByLabel('City / country',{exact:true}).fill('Miami, USA');await choose(page,'Email');
 }
 async function readyForReview(page: Page) { await start(page);await watch(page);await choose(page,'No');await contact(page); }
+test('phone is required for email follow-up, rejects blanks and invalid formats, and remains accessible on mobile',async({page})=>{
+ await start(page);await watch(page);await choose(page,'No');await page.getByLabel('Full name',{exact:true}).fill('Test Client');await page.getByRole('textbox',{name:'Email',exact:true}).fill('test@example.com');await page.getByLabel('City / country',{exact:true}).fill('London, UK');
+ const phone=page.getByRole('textbox',{name:'Phone',exact:true});await expect(phone).toHaveAttribute('required','');await expect(phone).toHaveAttribute('type','tel');await expect(phone).toHaveAttribute('autocomplete','tel');await expect(phone).toHaveAttribute('inputmode','tel');await expect(phone.locator('xpath=..').locator('span',{hasText:'Optional'})).toHaveCount(0);await choose(page,'Email',false);await next(page);await expect(phone).toHaveAttribute('aria-invalid','true');await expect(page.getByText('A phone number is required, including for email follow-up.',{exact:true})).toBeVisible();
+ await phone.fill('   ');await next(page);await expect(phone).toHaveAttribute('aria-invalid','true');await phone.fill('invalid');await next(page);await expect(page.getByText('Enter a valid phone number, for example +44 20 7946 0958.',{exact:true})).toBeVisible();await expect(phone).toHaveAttribute('aria-describedby',/.+-error$/);await phone.fill('+44 20 7946 0958');await next(page);await expect(page.getByRole('heading',{name:'Does everything look right?'})).toBeVisible();await expect(page.getByText('Phone: +44 20 7946 0958',{exact:true})).toBeVisible();expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
+});
 test('all nine steps auto advance where complete; email and consent remain required',async({page})=>{
  const errors:string[]=[];page.on('pageerror',e=>errors.push(e.message));
  await start(page);await watch(page);await choose(page,'No');await next(page);

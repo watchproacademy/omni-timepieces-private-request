@@ -91,7 +91,7 @@ body:has(.operator-shell) .movement{display:none}
 .operator-portal{margin-top:8px}
 .operator-dashboard .request-summary .tracking-sync{margin-bottom:4px}
 .operator-dashboard .request-panel-nav{padding-top:8px;margin-bottom:12px}
-.operator-queue .admin-filters label:last-of-type{grid-column:1/-1}
+.operator-queue .admin-filters .filter-attention{grid-column:1/-1}
 
 .operator-shell{padding:20px clamp(20px,3vw,48px)}
 .operator-topbar{padding-bottom:16px}
@@ -116,3 +116,17 @@ body:has(.operator-shell) .movement{display:none}
 .request-preferences{margin-block:12px}.request-preferences summary{min-height:44px;cursor:pointer;display:flex;align-items:center}.request-preferences dl{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;font-size:14px}.request-preferences dt{font-weight:600}.request-preferences dd{margin:0;overflow-wrap:anywhere}.request-update-offer{padding:12px;border:1px solid var(--border-default);margin-block:12px}.request-update-offer p{margin-bottom:8px}.request-update-offer button{margin-right:8px}
 @media(min-width:651px){.operator-dashboard .request-summary:has(.edit-request-action){padding-right:140px}.operator-dashboard .edit-request-action{position:absolute;right:0;top:0}}
 .editor-section-nav{display:flex;flex-wrap:wrap;gap:8px;margin-block:12px}.operator-portal .editor-section-nav button[aria-current=page]{background:var(--selected-background);border-color:var(--accent);font-weight:600}
+
+.priority-badge{display:inline-block;width:fit-content;padding:3px 8px;border:1px solid var(--border-default);border-radius:4px;font-weight:600;font-size:14px;color:var(--text-primary);background:var(--surface-card)}
+.priority-focus{border-left:4px solid var(--accent)}.priority-soon{border-left:4px double var(--accent)}.priority-clarify{border-style:dashed}.priority-closed{color:var(--text-secondary)}
+.request-priority{padding:10px 0;border-block:1px solid var(--border-default);margin-bottom:4px}.priority-heading{display:flex;align-items:center;gap:10px;flex-wrap:wrap;font-size:14px}.priority-heading button{margin-left:auto;padding:8px 12px;min-height:44px}.request-priority>p{font-size:14px;margin:6px 0}.priority-rules{font-size:14px}.priority-rules summary{min-height:36px;cursor:pointer}.priority-rules p{line-height:1.5}.priority-form{display:grid;grid-template-columns:1fr 1.5fr;gap:12px;margin:10px 0}.priority-form>p,.priority-actions{grid-column:1/-1}.priority-form label{display:grid;gap:6px;font-size:15px}.priority-form textarea{min-height:72px}.priority-actions{display:flex;gap:8px;flex-wrap:wrap}.priority-history{padding:12px;border:1px solid var(--border-default);margin-block:12px}.queue-timeline{overflow-wrap:anywhere}.operator-queue .tracking-request .priority-badge{color:var(--text-primary)}
+@media(max-width:650px){.priority-form{grid-template-columns:1fr}.priority-heading button{margin-left:0}.priority-actions button{flex:1}}
+
+.priority-heading>.priority-rules{max-width:100%;font-size:14px}.priority-heading>.priority-rules summary{display:flex;align-items:center;min-height:44px;text-decoration:underline;text-underline-offset:3px}.priority-heading>.priority-rules[open]{flex-basis:100%;order:2}.request-priority{padding-block:6px}
+
+.operator-stage-label{display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 20px}.operator-stage-label p{font-size:14px}.operator-stage-label p strong{font-size:14px}
+@media(min-width:901px){.operator-shell{padding-top:16px}.operator-topbar{padding-bottom:8px}.operator-page{margin-top:8px}.operator-dashboard .tracking-watch{padding:12px}.operator-dashboard .operator-stage{margin-block:8px}.operator-dashboard .portal-form{gap:8px;margin-top:8px}.operator-dashboard .tracking-watch>.portal-form>.primary{min-height:44px;padding-block:8px}}
+
+.advanced-filters{grid-column:1/-1}.advanced-filters summary{min-height:44px;cursor:pointer;display:flex;align-items:center;font-size:14px;text-decoration:underline;text-underline-offset:3px}.advanced-fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-top:8px}.admin-filters .advanced-fields label:first-child{grid-column:auto}.advanced-filters .filter-help{margin-block:8px;font-size:13px;line-height:1.5}
+@media(max-width:400px){.advanced-fields{grid-template-columns:1fr}}
+.operator-queue .admin-filters select,.priority-form select{appearance:none;height:44px;padding-right:30px;background-image:linear-gradient(45deg,transparent 50%,var(--text-secondary) 50%),linear-gradient(135deg,var(--text-secondary) 50%,transparent 50%);background-position:calc(100% - 17px) 50%,calc(100% - 13px) 50%;background-size:4px 4px;background-repeat:no-repeat}

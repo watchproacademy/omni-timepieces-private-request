@@ -3,12 +3,19 @@ import { choices, config } from './config';
 const short = z.string().trim().max(150);
 const required = short.min(1, 'This detail is required.');
 const positive = z.number().finite().positive().max(100000000);
-const phone = z.string().trim().max(40).refine(v => !v || /^\+?[\d\s().-]{7,40}$/.test(v) && v.replace(/\D/g, '').length >= 7, 'Enter a valid phone number.');
-export const watchSchema = z.object({
+/** Blank is retained only for pre-existing requests; new submissions refine this to required. */
+export const legacyPhoneSchema=z.string({error:'Enter your phone number.'}).trim().max(40,'Use up to 40 characters for the phone number.').refine(value=>{
+ if(!value)return true;
+ const digits=value.replace(/\D/g,'');const number=digits.startsWith('00')?digits.slice(2):digits;
+ return /^\+?[\d ()\u00a0.-]+$/.test(value)&&number.length>=7&&number.length<=15;
+},'Enter a valid phone number, for example +44 20 7946 0958.');
+const phone=legacyPhoneSchema.refine(value=>!!value,'A phone number is required, including for email follow-up.');
+
+export function watchSchemaForTimeline<T extends z.ZodType<string>>(timeline:T){return z.object({
     id: z.string().min(1).max(80), brand: required.refine(v => v !== 'Other', 'Enter the brand name.'), model: required,
     reference: short, year: short, dial: short, caseMaterial: short, bracelet: short,
     caseMaterialOther: short, braceletOther: short,
-    occasion: z.enum(choices.occasion), condition: z.enum(choices.condition), timeline: z.enum(choices.timeline),
+    occasion: z.enum(choices.occasion), condition: z.enum(choices.condition), timeline,
     budget: z.enum(choices.budget), budgetMin: z.number().finite().min(0).max(100000000).optional(), budgetMax: positive.optional(),
 }).superRefine((watch, ctx) => {
     if (watch.budget === 'Custom') {
@@ -21,7 +28,8 @@ export const watchSchema = z.object({
         if (/other|specific/i.test(watch[field]) && !watch[other])
             ctx.addIssue({ code: 'custom', path: [other], message: 'Describe your specific preference.' });
     }
-});
+});}
+export const watchSchema=watchSchemaForTimeline(z.enum(choices.timeline));
 export const tradeSchema = z.object({
     id: required, brand: required.refine(v => v !== 'Other', 'Enter the brand name.'), model: required, reference: short, year: short, dial: short, bracelet: short,
     condition: z.enum(choices.tradeCondition), set: z.enum(choices.tradeSet), setOther: short,
@@ -32,9 +40,6 @@ export const tradeSchema = z.object({
 export const contactSchema = z.object({
     fullName: required, email: z.string().trim().max(254).email('Enter a valid email address.'), phone,
     location: required, preferredContact: z.enum(choices.preferredContact),
-}).superRefine((contact, ctx) => {
-    if (contact.preferredContact !== 'Email' && !contact.phone)
-        ctx.addIssue({ code: 'custom', path: ['phone'], message: 'Add a phone number for your preferred contact method.' });
 });
 const safeUrl = z.string().trim().max(2000).refine(value => {
     if (!value)
