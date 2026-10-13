@@ -7,7 +7,7 @@ export type DeliveryJob = {
     inquiry_id: string;
     public_reference?: string;
     kind: 'owner' | 'receipt' | 'update' | 'operator_update';
-    event?: {title: string; message: string};
+    event?: {title: string; message: string;section?:string};
     state: string;
     attempts: number;
     first_attempt_at: string | null;

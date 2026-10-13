@@ -9,7 +9,7 @@ import {accessEmail,customerPortalUrl,operatorPortalUrl} from '@/lib/server/emai
 export const runtime='nodejs';
 const reply=(body:unknown,status=200,extra:Record<string,string>={})=>Response.json(body,{status,headers:{'Cache-Control':'no-store','X-Robots-Tag':'noindex','Referrer-Policy':'no-referrer',...extra}});
 const enabled=()=>process.env.REQUEST_TRACKING_ENABLED==='true';
-const login=z.object({action:z.literal('login'),role:z.enum(['customer','owner']),email:z.string().email().max(254),requestId:z.string().max(100).default('')});
+const login=z.object({action:z.literal('login'),role:z.enum(['customer','owner']),email:z.string().email().max(254),requestId:z.string().max(100).default(''),section:z.enum(['messages','negotiation']).optional()});
 const edit=z.object({action:z.literal('update'),requestId:z.string().min(1).max(100),watchId:z.string().min(1).max(100),stage:z.enum(['received','sourcing','quoted','waiting','cancelled']),note:z.string().trim().max(1000),orderId:z.string().regex(/^(gid:\/\/shopify\/Order\/\d+)?$/),lineId:z.string().regex(/^(gid:\/\/shopify\/LineItem\/\d+)?$/),version:z.number().int().min(0)}).refine(v=>!!v.orderId===!!v.lineId);
 async function throttle(key:string,limit:number) {
  const rows=await database().query(`INSERT INTO abuse_windows(key,count,expires_at) VALUES($1,1,now()+interval '1 hour') ON CONFLICT(key) DO UPDATE SET count=CASE WHEN abuse_windows.expires_at<now() THEN 1 ELSE abuse_windows.count+1 END,expires_at=CASE WHEN abuse_windows.expires_at<now() THEN now()+interval '1 hour' ELSE abuse_windows.expires_at END RETURNING count`,['tracking:'+fingerprint(key)]);
@@ -53,7 +53,7 @@ export async function POST(request:Request) {
  if(matches){
  const token=await issueAccess(v.role,v.role==='owner'?null:matched!.id);
  const destination=v.role==='owner'?operatorPortalUrl():customerPortalUrl();if(!destination)throw new Error('email link unavailable');
- const linkUrl=new URL(destination);if(v.role==='owner'&&v.requestId.trim()){linkUrl.searchParams.set('request',v.requestId.trim());linkUrl.searchParams.set('section','messages');}linkUrl.hash=`access=${token}`;const link=linkUrl.href;
+ const linkUrl=new URL(destination);if(v.role==='owner'&&v.requestId.trim()){linkUrl.searchParams.set('request',v.requestId.trim());linkUrl.searchParams.set('section',v.section||'messages');}else if(v.role==='customer'&&v.section==='negotiation'){linkUrl.searchParams.set('request',matched!.id);linkUrl.searchParams.set('section','negotiation');}linkUrl.hash=`access=${token}`;const link=linkUrl.href;
  const result=await fetch('https://api.resend.com/emails',{method:'POST',headers:{Authorization:`Bearer ${process.env.RESEND_API_KEY}`,'Content-Type':'application/json','Idempotency-Key':'tracking:'+tokenHash(token)},body:JSON.stringify({from:brandedEmailSender(process.env.WATCH_REQUEST_FROM_EMAIL),to:[email],...accessEmail(v.role,link,v.requestId.trim())}),signal:AbortSignal.timeout(10000)});
  if(!result.ok)throw new Error('email unavailable');
  }
