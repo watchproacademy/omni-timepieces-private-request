@@ -170,6 +170,11 @@ body[data-concierge-active=true] .gear-two, body[data-concierge-active=true] .se
 .watch-guidance > p { color: var(--text-secondary); font-size: var(--text-label); margin-bottom: var(--space-3); }
 .guidance-actions { display: flex; flex-wrap: wrap; gap: var(--space-3); }
 .watch-guidance > .guidance-feedback { margin: var(--space-4) 0 0; color: var(--text-primary); }
+.watch-reference .reference-hint { margin: 8px 0 0; font-size: var(--text-small); }
+#request-form .field input,#request-form .field select{scroll-margin-block:16px 100px}
+.configuration-choices{grid-column:1/-1}.configuration-label{display:flex;justify-content:space-between;gap:8px;font-size:var(--text-label);margin-bottom:8px}.configuration-label span{font-size:var(--text-small);color:var(--text-secondary)}.choice-preference .choices{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.choice-preference .choices button{padding:12px;min-height:48px}.choice-preference .choice-copy strong{font-family:var(--font-body);font-size:var(--text-body);font-weight:500;line-height:1.4}.choice-preference .choice-check{flex-shrink:0}
+.picker-menu li>span{min-width:0;overflow-wrap:anywhere}
+@media(max-width:650px){.watch-details-fields,.trade-details-fields{grid-template-columns:1fr}.watch-details-fields>.field:first-child,.watch-details-fields>.watch-reference,.trade-details-fields>.watch-reference{grid-column:1/-1}}
 
 /* The request entrance is a quiet desk, with utilities tucked into one row. */
 .request-shell { max-width: 1100px; min-height: 100svh; min-height: 100dvh; display: grid; grid-template-rows: auto 1fr auto; padding-top: max(var(--space-3),env(safe-area-inset-top)); }

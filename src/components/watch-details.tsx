@@ -1,7 +1,7 @@
 'use client';
-import { profileForBrand, referencesFor, wearingOptionsFor, yearsFor, yearPreferences } from '@/lib/catalog';
+import { profileForBrand, wearingOptionsFor, yearsFor, yearPreferences } from '@/lib/catalog';
 import { useRequest } from './providers';
-import { Field, SelectField } from './fields';
+import { Choices, Field, ReferenceField, SelectField } from './fields';
 import { AssistantDialog } from './assistant-dialog';
 import { useSound } from './sound';
 import type { EditableWatch } from '@/lib/state';
@@ -13,9 +13,9 @@ export function WatchDetails({ watch }: {
     const profile = profileForBrand(watch.brand);
     const update = (patch: Partial<EditableWatch>) => dispatch({ type: 'watch/update', id: watch.id, patch });
     const wearing = wearingOptionsFor(profile, watch.model);
-    return <><p className="helper">{profile.helper}</p><div className="suggestions" aria-label="Suggested models">{profile.suggestions.map(model => <button type="button" key={model} aria-label={model} aria-pressed={watch.model === model} onClick={() => { tick(); update({ model }); }}>{model}</button>)}</div><div className="watch-guidance"><p>Not sure which model? Leave it open for your concierge, or describe the watch you have in mind.</p><div className="guidance-actions"><AssistantDialog /></div>{watch.model === "Open to guidance" ? <p className="guidance-feedback" role="status">Model left open. Your concierge will help you explore {watch.brand || "watch"} options. You can continue with the details you know.</p> : null}</div><div className="field-grid">
+    return <><p className="helper">{profile.helper}</p><div className="suggestions" aria-label="Suggested models">{profile.suggestions.map(model => <button type="button" key={model} aria-label={model} aria-pressed={watch.model === model} onClick={() => { tick(); update({ model }); }}>{model}</button>)}</div><div className="watch-guidance"><p>Not sure which model? Leave it open for your concierge, or describe the watch you have in mind.</p><div className="guidance-actions"><AssistantDialog /></div>{watch.model === "Open to guidance" ? <p className="guidance-feedback" role="status">Model left open. Your concierge will help you explore {watch.brand || "watch"} options. You can continue with the details you know.</p> : null}</div><div className="field-grid watch-details-fields">
  <Field label={profile.modelLabel} value={watch.model} required options={profile.suggestions} placeholder={profile.modelPlaceholder} onChange={model => update({ model })}/>
- <Field label={profile.referenceLabel} value={watch.reference} options={referencesFor(watch.brand, watch.model)} onChange={reference => update({ reference })}/>
+ <ReferenceField label={profile.referenceLabel} value={watch.reference} onChange={reference=>update({reference})}/>
  <div className="year-preference">
  <Field label={profile.yearLabel} value={watch.year} options={[...yearPreferences.map(option => option.value), ...yearsFor()]} onChange={year => update({ year })}/>
  <div className="suggestions year-shortcuts" role="group" aria-label="Year range shortcuts">{yearPreferences.map(option => <button type="button" key={option.value} aria-label={option.value} aria-pressed={watch.year === option.value} onClick={() => { tick(); update({ year: watch.year === option.value ? '' : option.value }); }}>{option.label}</button>)}</div>
@@ -23,7 +23,7 @@ export function WatchDetails({ watch }: {
  </div>
  <Field label={profile.dialLabel} value={watch.dial} options={profile.dials} onChange={dial => update({ dial })}/>
  {profile.materials.length ? <SelectField label={profile.materialLabel} value={watch.caseMaterial} options={[...profile.materials, 'Other / specific']} onChange={caseMaterial => update({ caseMaterial, caseMaterialOther: '' })}/> : null}
- {wearing.length ? <SelectField label={profile.braceletLabel} value={watch.bracelet} options={[...wearing, 'Other / specific']} onChange={bracelet => update({ bracelet, braceletOther: '' })}/> : null}
+ {wearing.length ? wearing.length<=3?<div className="field configuration-choices"><p className="configuration-label">{profile.braceletLabel}<span>Optional</span></p><Choices label={profile.braceletLabel} variant="preference" value={watch.bracelet||'Keep open'} options={['Keep open',...wearing,'Other / specific']} onChange={bracelet=>update({bracelet:bracelet==='Keep open'?'':bracelet,braceletOther:''})}/></div>:<SelectField label={profile.braceletLabel} value={watch.bracelet} options={[...wearing, 'Other / specific']} onChange={bracelet => update({ bracelet, braceletOther: '' })}/> : null}
  {/other|specific/i.test(watch.caseMaterial) ? <Field label="Specific case material" value={watch.caseMaterialOther} required onChange={caseMaterialOther => update({ caseMaterialOther })}/> : null}
  {/other|specific/i.test(watch.bracelet) ? <Field label="Specific bracelet or strap" value={watch.braceletOther} required onChange={braceletOther => update({ braceletOther })}/> : null}
  </div></>;
