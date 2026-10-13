@@ -103,3 +103,16 @@ body:has(.operator-shell) .movement{display:none}
 .operator-dashboard .request-summary{overflow-wrap:anywhere}
 
 @media(max-width:900px){.operator-portal .tracking-toolbar{gap:8px}.operator-portal .tracking-toolbar button{font-size:14px;padding:10px 12px}}
+.operator-dashboard .request-summary{position:relative}
+.operator-dashboard .edit-request-action{margin-bottom:10px}
+.operator-dashboard .editor-fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;border:1px solid var(--border-default);padding:16px;margin:16px 0;min-width:0}
+.editor-fields label{display:grid;gap:6px;font-size:15px;min-width:0}
+.editor-fields legend{font-weight:600;padding-inline:6px}
+.editor-fields .editor-wide{grid-column:1/-1}
+.editor-actions{display:flex;flex-wrap:wrap;align-items:center;gap:10px;position:sticky;bottom:0;padding:12px;background:var(--surface-card);border:1px solid var(--border-default);z-index:2}
+.original-submission{margin-top:20px}.original-submission dl>div,.edit-history dl>div{display:grid;grid-template-columns:minmax(100px,.5fr) minmax(0,1fr);gap:12px;margin:8px 0}.original-submission dt,.edit-history dt{font-weight:600}.original-submission dd,.edit-history dd{margin:0;overflow-wrap:anywhere}
+.edit-history article{padding:12px;border:1px solid var(--border-default);margin-block:12px}.edit-history small{color:var(--text-secondary)}
+@media(max-width:650px){.operator-dashboard .editor-fields{grid-template-columns:1fr;padding:12px}.editor-actions .primary{flex:1}.editor-actions>.tracking-sync{width:100%}}
+.request-preferences{margin-block:12px}.request-preferences summary{min-height:44px;cursor:pointer;display:flex;align-items:center}.request-preferences dl{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;font-size:14px}.request-preferences dt{font-weight:600}.request-preferences dd{margin:0;overflow-wrap:anywhere}.request-update-offer{padding:12px;border:1px solid var(--border-default);margin-block:12px}.request-update-offer p{margin-bottom:8px}.request-update-offer button{margin-right:8px}
+@media(min-width:651px){.operator-dashboard .request-summary:has(.edit-request-action){padding-right:140px}.operator-dashboard .edit-request-action{position:absolute;right:0;top:0}}
+.editor-section-nav{display:flex;flex-wrap:wrap;gap:8px;margin-block:12px}.operator-portal .editor-section-nav button[aria-current=page]{background:var(--selected-background);border-color:var(--accent);font-weight:600}
