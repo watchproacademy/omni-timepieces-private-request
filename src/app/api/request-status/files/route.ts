@@ -1,3 +1,4 @@
+import {commercialEnabled,visibleCommercialFileSql} from '@/lib/server/commercial-documents';
 import {scanDocument} from '@/lib/server/malware-scan';
 import {publishPending} from '@/lib/server/queue';
 import {after} from 'next/server';
@@ -15,6 +16,7 @@ export async function POST(request:Request){
  checkOrigin(request);const url=new URL(request.url),id=url.searchParams.get('id')||'',kind=url.searchParams.get('kind')||'';
  const access=await portalAccess(request,id);await portalLimit(request,120);
  if(!['identity','address','business','invoice'].includes(kind)||(kind==='invoice')!==(access.role==='owner'))throw new Error('ACCESS_DENIED');
+ if(kind==='invoice'&&commercialEnabled())return portalReply({message:'Upload new invoices in commercial document review so they stay private until approval.'},400);
  const bytes=await limitedBody(request,3*1024*1024);if(!bytes.length)throw new Error('INVALID_INPUT');
  const type=documentType(bytes),file=randomUUID(),path=`requests/${id}/${file}.${type.extension}`;
  await scanDocument(bytes,type.mime);
@@ -30,8 +32,8 @@ export async function GET(request:Request){
  if(!portalEnabled())return portalReply({message:'Unavailable'},503);
  try{
  const url=new URL(request.url),id=url.searchParams.get('id')||'',file=url.searchParams.get('file')||'';
- await portalAccess(request,id);await portalLimit(request,120);
- const rows=await database().query("SELECT pathname,mime,kind,scan_status FROM request_files WHERE id=$1 AND inquiry_id=$2 AND state='ready' AND expires_at>now()",[file,id]);
+ const access=await portalAccess(request,id);await portalLimit(request,120);
+ const rows=await database().query("SELECT pathname,mime,kind,scan_status FROM request_files WHERE id=$1 AND inquiry_id=$2 AND state='ready' AND expires_at>now()"+visibleCommercialFileSql(access.role==='owner'),[file,id]);
  if(!rows[0])return portalReply({message:'File unavailable.'},404);
  if(rows[0].scan_status==='blocked')throw new Error('FILE_BLOCKED');
  await database().query('INSERT INTO request_events(id,inquiry_id,actor,action,detail) VALUES($1,$2,$3,$4,$5::jsonb)',[randomUUID(),id,fingerprint(request.headers.get('cookie')||''),'document_download',JSON.stringify({fileId:file})]);
