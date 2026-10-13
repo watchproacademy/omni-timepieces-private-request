@@ -5,14 +5,14 @@ import {PGlite} from '@electric-sql/pglite';
 
 test('admin enrollment is one-time, sessions rotate, and email-only sessions cannot add backup keys',async()=>{
  const db=new PGlite();try{
- for(const file of ['001_inquiries.sql','002_tracking.sql','003_portal.sql','008_admin_passkeys_and_scans.sql','009_scan_replacements.sql']) await db.exec(await readFile('migrations/'+file,'utf8'));
+ for(const file of ['001_inquiries.sql','002_tracking.sql','003_portal.sql','008_admin_passkeys_and_scans.sql','009_scan_replacements.sql','014_direct_admin_passkey.sql']) await db.exec(await readFile('migrations/'+file,'utf8'));
  await db.exec(await readFile('migrations/008_admin_passkeys_and_scans.sql','utf8'));
  const session=async(id:string)=>db.query("INSERT INTO tracking_access(token_hash,role,owner_email,session,expires_at) VALUES($1,'owner','owner@example.com',true,now()+interval '1 hour')",[id]);
  await session('email-only');await session('attacker-email-only');
  await db.exec("INSERT INTO admin_enrollment VALUES('owner@example.com','setup-hash',now()+interval '1 hour')");
  const complete=(id:string,key:string,bootstrap:string|null,newSession:string,publicKey:string|null='public-key',previous=0)=>db.query('SELECT complete_admin_passkey($1,$2,$3,$4,$5,$6,$7,$8::jsonb,$9,$10)',[id,'owner@example.com','example.com',key,publicKey,1,previous,'[]',bootstrap,newSession]);
  await assert.rejects(complete('email-only','key','wrong','next'),/ACCESS_DENIED/);
- await complete('email-only','key','setup-hash','verified');
+ const expiry=(await db.query<{expires_at:string}>("SELECT expires_at FROM tracking_access WHERE token_hash='email-only'")).rows[0].expires_at;await complete('email-only','key','setup-hash','verified');assert.equal(new Date((await db.query<{expires_at:string}>("SELECT expires_at FROM tracking_access WHERE token_hash='verified'")).rows[0].expires_at).getTime(),new Date(expiry).getTime());
  assert.equal((await db.query("SELECT * FROM tracking_access WHERE token_hash='email-only'")).rows.length,0);
  assert.equal((await db.query<{mfa_verified:boolean}>("SELECT mfa_verified FROM tracking_access WHERE token_hash='verified'")).rows[0].mfa_verified,true);
  assert.equal((await db.query('SELECT * FROM admin_enrollment')).rows.length,0);
