@@ -59,7 +59,7 @@ export function RequestDashboard({request,owner,onSaved,onWorking,onRefresh}:{re
  <label>Residential address<textarea name="address" required maxLength={500} autoComplete="street-address" defaultValue={request.review.form.address}/></label>
  <label>Purchasing for<select name="relationship" defaultValue={request.review.form.relationship||'self'}><option value="self">Myself</option><option value="business">A business</option></select></label>
  <label>Business name, if applicable<input name="businessName" maxLength={200} defaultValue={request.review.form.businessName}/></label>
- <label className="portal-check"><input type="checkbox" name="consent" required/>I confirm these details are accurate and authorize Omni’s KYC team to review the documents for this transaction.</label>
+ <label className="portal-check"><input type="checkbox" name="consent" required/>I confirm these details are accurate and authorize the Omni Timepieces KYC team to review the documents for this transaction.</label>
  <button className="primary" disabled={busy}>Submit for review</button></form></>:<p>We’ll email you when documents or additional information are needed.</p>}
  </section>:null}
  {owner||request.files.length>0?<section className="portal-section" hidden={owner&&(editing||priorityEditing||panel!=='documents')}><h2>Documents & invoices</h2><p>PDF, JPG, or PNG · Up to 3 MB per file. Documents are retained for one year from upload and are accessible only through the private dashboard.</p>

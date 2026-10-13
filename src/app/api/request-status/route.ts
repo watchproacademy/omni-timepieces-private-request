@@ -1,10 +1,11 @@
-import {allowsAdmin,internalPortalOrigin} from '@/lib/server/admin-boundary';
+import { brandedEmailSender } from '@/lib/server/email';
+import {allowsAdmin} from '@/lib/server/admin-boundary';
 import { z } from 'zod';
 import { database } from '@/lib/server/db';
 import { fingerprint } from '@/lib/server/repository';
 import { accessFor,consumeAccess,issueAccess,trackingCookie,tokenHash,revokeAccess } from '@/lib/server/tracking-auth';
 import { trackingRequest,updateWatch,orderChoices } from '@/lib/server/tracking-service';
-import { config } from '@/lib/config';
+import {accessEmail,customerPortalUrl,operatorPortalUrl} from '@/lib/server/email';
 export const runtime='nodejs';
 const reply=(body:unknown,status=200,extra:Record<string,string>={})=>Response.json(body,{status,headers:{'Cache-Control':'no-store','X-Robots-Tag':'noindex','Referrer-Policy':'no-referrer',...extra}});
 const enabled=()=>process.env.REQUEST_TRACKING_ENABLED==='true';
@@ -51,8 +52,9 @@ export async function POST(request:Request) {
  const matches=v.role==='owner'?email===owner:!!matched;
  if(matches){
  const token=await issueAccess(v.role,v.role==='owner'?null:matched!.id);
- const link=`${v.role==='owner'?internalPortalOrigin():process.env.TRACKING_SITE_URL || config.siteUrl}/${v.role==='owner'?'private-desk':'request-status'}#access=${token}`;
- const result=await fetch('https://api.resend.com/emails',{method:'POST',headers:{Authorization:`Bearer ${process.env.RESEND_API_KEY}`,'Content-Type':'application/json','Idempotency-Key':'tracking:'+tokenHash(token)},body:JSON.stringify({from:process.env.WATCH_REQUEST_FROM_EMAIL,to:[email],subject:'Your private Omni request access',text:`Open your private request page: ${link}\n\nThis one-use link expires in 15 minutes. Keep it private. If you did not request this link, ignore this email.`}),signal:AbortSignal.timeout(10000)});
+ const destination=v.role==='owner'?operatorPortalUrl():customerPortalUrl();if(!destination)throw new Error('email link unavailable');
+ const link=`${destination}#access=${token}`;
+ const result=await fetch('https://api.resend.com/emails',{method:'POST',headers:{Authorization:`Bearer ${process.env.RESEND_API_KEY}`,'Content-Type':'application/json','Idempotency-Key':'tracking:'+tokenHash(token)},body:JSON.stringify({from:brandedEmailSender(process.env.WATCH_REQUEST_FROM_EMAIL),to:[email],...accessEmail(v.role,link,v.requestId.trim())}),signal:AbortSignal.timeout(10000)});
  if(!result.ok)throw new Error('email unavailable');
  }
  return reply({message:'If the details match, a private link will arrive shortly. Check your inbox and spam folder.'});
