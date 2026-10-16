@@ -1,14 +1,14 @@
 /** The private desk owns this workflow. Shopify is an optional source of evidence. */
 export const requestStages = [
     'received', 'sourcing', 'quote_sent', 'invoice_sent', 'paid',
-    'verification', 'ready_to_ship', 'shipped', 'delivered',
+    'verification', 'ready_to_ship', 'shipped', 'delivered', 'closed',
 ] as const;
 export type RequestStage = typeof requestStages[number];
 export const requestStageLabels: Record<RequestStage, string> = {
     received: 'Request received', sourcing: 'Sourcing your watch',
     quote_sent: 'Quote sent', invoice_sent: 'Invoice sent', paid: 'Payment received',
     verification: 'Transaction review', ready_to_ship: 'Ready to ship',
-    shipped: 'Shipped', delivered: 'Delivered',
+    shipped: 'Shipped', delivered: 'Delivered', closed: 'Request closed',
 };
 export const reviewStates = ['not_requested', 'requested', 'submitted', 'in_review', 'changes_requested', 'approved', 'declined'] as const;
 export type ReviewState = typeof reviewStates[number];

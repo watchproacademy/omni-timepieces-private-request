@@ -1,3 +1,4 @@
+import {postAgreementEnabled,invoiceContextSchema} from '@/lib/server/post-agreement';
 import {createHash} from 'node:crypto';
 import {z} from 'zod';
 import {put} from '@vercel/blob';
@@ -14,7 +15,7 @@ import {processDelivery} from '@/lib/server/worker';
 import {portalEnabled,portalAccess,portalLimit,checkOrigin,limitedBody,portalReply,portalError} from '@/lib/server/portal';
 export const runtime='nodejs';
 export const maxDuration=30;
-const inputSchema=z.object({requestId:z.string().min(1).max(100),documentId:z.string().uuid(),version:z.number().int().nonnegative(),key:z.string().uuid(),action:z.enum(['save','approve','discard']),data:z.unknown().optional(),reviewed:z.boolean().optional()}).strict();
+const inputSchema=z.object({requestId:z.string().min(1).max(100),documentId:z.string().uuid(),version:z.number().int().nonnegative(),key:z.string().uuid(),action:z.enum(['save','approve','discard']),data:z.unknown().optional(),reviewed:z.boolean().optional(),invoiceContext:invoiceContextSchema.optional()}).strict();
 export async function GET(request:Request){if(!portalEnabled()||!commercialEnabled())return portalReply({message:'Commercial document review is unavailable.'},503);try{const id=new URL(request.url).searchParams.get('id')||'';const access=await portalAccess(request,id);await portalLimit(request,120);return portalReply({documents:await listCommercialDocuments(id,access.role==='owner')});}catch(error){return portalError(error);}}
 export async function POST(request:Request){
  if(!portalEnabled()||!commercialEnabled())return portalReply({message:'Commercial document review is unavailable.'},503);
@@ -37,7 +38,12 @@ export async function POST(request:Request){
   if(!request.headers.get('content-type')?.startsWith('application/json'))throw new Error('INVALID_INPUT');
   const input=inputSchema.parse(JSON.parse((await limitedBody(request,30000)).toString())),access=await portalAccess(request,input.requestId);if(access.role!=='owner')throw new Error('ACCESS_DENIED');await portalLimit(request,120);
   let data:unknown={};if(input.action==='save')data=commercialDraftSchema.parse(input.data);if(input.action==='approve'){if(!input.reviewed)throw new Error('COMMERCIAL_REVIEW_REQUIRED');data=commercialSummarySchema.parse(input.data);const doc=await database().query('SELECT kind FROM commercial_documents WHERE id=$1 AND inquiry_id=$2',[input.documentId,input.requestId]);if(doc[0]?.kind==='quote'&&(data as {paymentDueDate:string}).paymentDueDate)throw new Error('INVALID_INPUT');}
-  await database().query('SELECT commercial_mutate($1,$2,$3,$4,$5,$6::jsonb,$7)',[input.requestId,input.documentId,input.version,input.key,input.action,JSON.stringify(data),fingerprint(request.headers.get('cookie')||'')]);
+  const sql=database(),actor=fingerprint(request.headers.get('cookie')||'');
+  const kinds=input.action==='approve'&&postAgreementEnabled()?await sql.query('SELECT kind FROM commercial_documents WHERE id=$1 AND inquiry_id=$2',[input.documentId,input.requestId]):[];
+  if(input.action==='approve'&&kinds[0]?.kind==='invoice'&&postAgreementEnabled()){
+   if(!input.invoiceContext)throw new Error('PAYMENT_INSTRUCTIONS_REQUIRED');const context=input.invoiceContext;
+   await sql.query('SELECT transaction_publish_invoice($1,$2,$3,$4,$5,$6::jsonb,$7,$8,$9,$10)',[input.requestId,context.offerId,input.documentId,input.version,input.key,JSON.stringify(data),context.paymentMethod,context.paymentInstructions,access.role,actor]);
+  }else await sql.query('SELECT commercial_mutate($1,$2,$3,$4,$5,$6::jsonb,$7)',[input.requestId,input.documentId,input.version,input.key,input.action,JSON.stringify(data),actor]);
   if(input.action==='approve')after(async()=>{try{await publishPending(input.requestId);return;}catch{console.error('commercial_queue_pending');}for(const job of await pendingJobIds(input.requestId)){try{await processDelivery(job);}catch{console.error('commercial_email_pending');}}});
   return portalReply({ok:true,documents:await listCommercialDocuments(input.requestId,true)});
  }catch(error){if(error instanceof z.ZodError)return portalReply({message:error.issues.map(issue=>`${issue.path.join('.')}: ${issue.message}`).join(' ')},400);return portalError(error);}
