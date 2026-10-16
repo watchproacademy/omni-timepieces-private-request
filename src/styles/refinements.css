@@ -1,0 +1,123 @@
+/* Porcelain and graphite with the established typographic identity. */
+body{background:var(--surface-page)}
+body:has(.operator-shell) .movement{display:none}
+body[data-concierge-active=true] .movement{opacity:.3}
+body[data-concierge-active=true] :is(.gear,.seconds-wheel span,.balance-wheel,.escapement){animation-play-state:paused}
+.wordmark{display:grid;gap:4px}
+.wordmark strong{font-size:25px;letter-spacing:.08em;line-height:1.2}
+.wordmark>span{font-size:10px;letter-spacing:.16em}
+.wordmark strong .wordmark-detail{font:inherit;color:inherit;letter-spacing:inherit;text-transform:none}
+.operator-topbar .header-tools{gap:12px;flex-wrap:wrap}
+.public-shell .topbar{padding-bottom:16px}
+/* Restore the original moving mechanical composition; the added local-time clock is operator-only. */
+.request-intro h1{overflow-wrap:anywhere}
+.intro-watch-phrase{display:inline-block;max-width:100%;vertical-align:bottom}
+@media(max-width:760px){.request-intro h1{font-size:clamp(2rem,10.5vw,2.8rem)}}
+.intro-proof{grid-template-columns:repeat(auto-fit,minmax(min(100%,9rem),1fr));container-type:inline-size;container-name:proof}
+.intro-proof dt,.intro-proof dd{overflow-wrap:anywhere}
+.intro-values{flex-wrap:wrap}
+@container proof (width < 18rem){.intro-proof>div+div{padding-left:0;border-left:0;border-top:1px solid var(--border-default)}}
+.request-topbar .header-popover{max-width:calc(100vw - max(16px,env(safe-area-inset-left)) - max(16px,env(safe-area-inset-right)))}
+.request-topbar .request-menu a{white-space:normal;overflow-wrap:anywhere}
+@media(min-width:761px){.request-shell{padding-left:max(clamp(20px,4vw,70px),env(safe-area-inset-left));padding-right:max(clamp(20px,4vw,70px),env(safe-area-inset-right))}}
+.request-topbar{flex-wrap:wrap}
+.request-topbar .header-tools{margin-inline-start:auto}
+.request-topbar .wordmark{max-width:100%;overflow-wrap:anywhere}
+.request-topbar .wordmark strong,.request-topbar .wordmark strong .wordmark-detail{text-transform:uppercase}
+.request-card{background:var(--surface-card);border-top:1px solid var(--border-control);box-shadow:0 12px 32px var(--palette-shadow)}
+.request-workspace{max-width:790px}
+.operator-queue{background:var(--surface-card)}
+.operator-dashboard .tracking-watch,.operator-dashboard .portal-section{background:var(--surface-card)}
+.request-panel-nav button[aria-current=page]{box-shadow:inset 0 -2px 0 var(--accent)}
+.customer-section-nav{display:flex;gap:8px;flex-wrap:wrap;position:sticky;top:8px;z-index:6;padding:8px;margin:8px -8px 20px;border:1px solid var(--border-default);border-radius:var(--radius-control);background:var(--surface-card);box-shadow:0 4px 12px var(--palette-shadow)}
+.customer-section-nav a{display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:8px 12px;text-decoration:none;font-size:14px;border-radius:var(--radius-control);color:var(--text-primary)}
+.customer-section-nav a:focus-visible{outline-offset:0}
+.customer-section-nav a:hover{background:var(--surface-raised)}
+.request-dashboard:not(.operator-dashboard) :is(.portal-section,.tracking-watch,#request-messages){scroll-margin-top:92px}
+.request-dashboard .portal-section:target{border-color:var(--accent)}
+/* Device-time instruments; hands step from Date values and have no continuous animation. */
+.local-clock{display:flex;align-items:center;gap:8px;margin:0;flex-shrink:0;color:var(--text-primary);font-variant-numeric:tabular-nums}
+.local-clock svg{display:block;width:40px;height:40px;flex:none;overflow:visible}
+.local-clock figcaption{display:grid;line-height:1.25;gap:3px}
+.local-clock-context{font-family:var(--font-body);font-size:12px;color:var(--text-secondary);white-space:nowrap}
+.local-clock time{font-family:var(--font-body);font-size:14px;white-space:nowrap}
+.local-clock-zone{font-size:12px;color:var(--text-secondary)}
+.local-clock[data-ready=false] .clock-hands{visibility:hidden}
+.clock-bezel{fill:var(--clock-metal-dark);stroke:var(--clock-metal-light);stroke-width:1}
+.clock-dial{fill:var(--clock-face);stroke:var(--clock-metal-dark);stroke-width:1}
+.clock-index{stroke:var(--clock-hand);stroke-width:2.2;stroke-linecap:round}
+.clock-minute-index{stroke:var(--clock-hand);stroke-width:.7;opacity:.6}
+.clock-hour,.clock-minute{fill:var(--clock-hand);stroke:var(--clock-face);stroke-width:.7}
+.clock-seconds{stroke:var(--accent);stroke-width:1.1;fill:var(--clock-face)}
+.clock-pin{fill:var(--accent);stroke:var(--clock-face);stroke-width:.7}
+.clock-numerals{font:19px var(--font-display);text-anchor:middle;fill:var(--clock-hand)}
+.clock-dial-label{font:5.5px var(--font-body);text-anchor:middle;letter-spacing:1.6px;fill:var(--text-secondary)}
+.clock-aperture{fill:var(--surface-raised);stroke:var(--clock-metal-dark);stroke-width:.8}
+.clock-aperture circle:last-child{fill:var(--accent)}
+.clock-crystal{stroke:var(--clock-metal-light);stroke-width:.8;opacity:.7;fill:none}
+.clock-crown{fill:var(--clock-metal-dark);stroke:var(--clock-metal-light);stroke-width:.8}
+.clock-screw{fill:var(--clock-metal-dark)}
+.clock-engraving{stroke:var(--clock-metal-light);stroke-width:.7}
+.local-clock--showcase{display:grid;justify-items:center;gap:4px;--clock-face:var(--brand-paper);--clock-hand:var(--palette-ink);color:var(--clock-stage-text)}
+.local-clock--showcase svg{width:100%;height:auto;max-width:280px}
+.local-clock--showcase figcaption{text-align:center}
+.local-clock--showcase .local-clock-context,.local-clock--showcase .local-clock-zone{color:var(--clock-stage-text);opacity:.8}
+.local-clock--showcase time{font-size:15px;letter-spacing:.04em}
+.local-clock--showcase .clock-dial-label{fill:var(--palette-grey)}
+.local-clock--showcase .clock-aperture{fill:var(--palette-stone)}
+.local-clock--showcase .clock-seconds{stroke:var(--palette-gold)}
+.confirmation-utilities{display:flex;align-items:start;justify-content:space-between;gap:16px}
+/* Tactile feedback is brief and precise; no looping decorative effects. */
+:where(button,.primary,.quiet-button,.customer-section-nav a){transition:border-color 160ms var(--ease),box-shadow 160ms var(--ease),transform 160ms var(--ease)}
+.primary{position:relative;background:var(--action-background);border:1px solid var(--action-background);box-shadow:inset 0 1px 0 color-mix(in srgb,var(--action-text) 18%,transparent);text-decoration:none}
+.primary:hover{text-decoration:none}
+:where(button,a,summary,input,select,textarea):focus-visible{outline:3px solid var(--focus-ring);outline-offset:3px;box-shadow:0 0 0 1px var(--surface-card)}
+:where(button):disabled,:where(button)[aria-disabled=true]{opacity:.65;transform:none;box-shadow:none;cursor:default}
+button[aria-busy=true]:not(.sound-toggle){position:relative;padding-inline-end:38px;cursor:progress}
+button[aria-busy=true]:not(.sound-toggle)::after{content:'';position:absolute;right:12px;top:calc(50% - 7px);width:14px;height:14px;border:1.5px solid currentColor;border-right-color:transparent;border-radius:50%;animation:control-working .8s linear infinite}
+:where(.tracking-portal,.request-card) summary{min-height:44px;cursor:pointer;padding-block:8px}
+:where(.portal-form,.commercial-form) input:focus-visible,:where(.portal-form,.commercial-form) textarea:focus-visible{outline-width:2px;outline-offset:2px}
+.operator-detail .portal-section,.operator-detail .tracking-watch,.request-intro{animation:surface-arrive 180ms var(--ease)}
+@keyframes control-working{to{transform:rotate(360deg)}}
+@keyframes surface-arrive{from{transform:translateY(4px)}to{transform:none}}
+@media(hover:hover) and (pointer:fine){
+ .primary:not(:disabled):not([aria-disabled=true]):hover{transform:translateY(-1px);box-shadow:inset 0 1px 0 color-mix(in srgb,var(--action-text) 25%,transparent),0 4px 10px var(--palette-shadow);background:color-mix(in srgb,var(--action-background) 92%,var(--text-primary))}
+ :where(.quiet-button,.tracking-portal button:not(.primary),.commercial-document-row,.watch-request-select):not(:disabled):hover{border-color:var(--accent);box-shadow:inset 0 0 0 .5px var(--border-control)}
+ .choices button:not(:disabled):hover{transform:translateY(-1px)}
+}
+:where(button,.primary,.quiet-button):not(:disabled):active{transform:translateY(1px);box-shadow:inset 0 1px 3px var(--palette-shadow)}
+@media(max-width:760px){
+ .wordmark strong{font-size:21px}
+ .wordmark>span{font-size:9px}
+ .operator-topbar .wordmark{justify-items:center}
+ .operator-topbar .header-tools{gap:8px;justify-content:center;flex-wrap:wrap}
+ .operator-topbar .sound-toggle{min-width:44px;width:44px;height:44px;padding:0}
+ .operator-topbar .sound-wave{display:none}
+ .operator-topbar .local-clock svg{width:30px;height:30px}
+ .operator-topbar .local-clock{gap:6px}
+ .request-dashboard:not(.operator-dashboard) :is(.portal-section,.tracking-watch,#request-messages){scroll-margin-top:124px}
+ .customer-section-nav{gap:4px}
+ .customer-section-nav a{padding-inline:10px}
+}
+@media(prefers-reduced-motion:reduce){
+ :where(button,.primary,.quiet-button,.customer-section-nav a){transition:none!important;transform:none!important}
+ .operator-detail .portal-section,.operator-detail .tracking-watch,.request-intro{animation:none}
+ .clock-seconds{display:none}
+ button[aria-busy=true]:not(.sound-toggle)::after{animation:none;border-right-color:currentColor;opacity:.6}
+}
+
+button:disabled:hover,button[aria-disabled=true]:hover{transform:none;box-shadow:none}
+
+@media(hover:none){.choices button:hover{transform:none}}
+
+/* A single requested watch needs a compact edit row, not a large selection rail. */
+.watch-requests[data-count='1']>p{display:none}
+.watch-requests[data-count='1'] .watch-request-item{flex-basis:100%;max-width:100%}
+.watch-requests[data-count='1'] .watch-request-select{display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:10px;min-height:48px;padding:10px 12px}
+.watch-requests[data-count='1'] .watch-request-select strong{font-size:14px;line-height:1.4}
+.watch-requests[data-count='1'] .watch-request-number::after{content:''}
+
+.request-context summary{min-height:44px;cursor:pointer;font-size:16px;color:var(--text-primary)}
+.request-context summary .helper{display:block;font-size:12px}
+.request-context textarea{width:100%;min-height:90px;margin-block:8px 16px}
+.request-preferences dd{overflow-wrap:anywhere}
