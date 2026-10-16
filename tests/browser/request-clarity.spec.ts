@@ -5,7 +5,7 @@ import {config} from '../../src/lib/config';
 import {requestSchema} from '../../src/lib/validation';
 import {fixture} from '../unit/fixtures';
 import {editableDetails} from '../../src/lib/request-details';
-const screenshots='/Users/kareem/Omni Funnel/artifacts/concierge-design/after';
+const screenshots='artifacts/ui-release/clarity';
 test('unknown model stays explicit and shared context is entered once, preserved through edits and submitted without guesses',async({page},info)=>{
  test.skip(process.env.OMNI_PORTAL_MODE==='internal');
  const draft=initialState();draft.step=8;Object.assign(draft.watches[0],{brand:'Rolex',model:'Daytona',reference:'',occasion:'For myself',condition:'Open to either',timeline:'No fixed timeline',budget:'Flexible'});draft.tradeIn='No';draft.contact={fullName:'Synthetic customer',email:'synthetic@example.invalid',phone:'+44 20 7946 0958',location:'London, UK',preferredContact:'Email'};
