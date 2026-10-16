@@ -15,7 +15,7 @@ export function WatchRequests({ onNavigate }: { onNavigate: () => void }) {
         }
     }, [state.activeWatchId]);
     if (!state.watches.some(watch => watch.brand) && state.watches.length === 1) return null;
-    return <nav className="watch-requests" aria-label="Requested watches">
+    return <nav className="watch-requests" data-count={state.watches.length} aria-label="Requested watches">
         <p className="helper">Your watch requests · Select a watch to edit</p>
         <div className="watch-request-rail" ref={rail}>{state.watches.map((watch, index) => {
             const label = `Watch ${index + 1}${watch.brand ? ` · ${watch.brand}` : ''}${watch.model && watch.model !== 'Open to guidance' ? ` ${watch.model}` : watch.model ? ' · Guidance' : ''}`;
