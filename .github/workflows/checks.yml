@@ -56,6 +56,17 @@ jobs:
           OMNI_PORTAL_MODE: 'internal'
           INTERNAL_PORTAL_URL: 'https://127.0.0.1:3100'
           TRACKING_SITE_URL: 'https://customer.example.com'
+      - name: Verify post-agreement transaction workflow
+        run: pnpm test:browser tests/browser/post-agreement.spec.ts --project=${{ matrix.browser }}
+        env:
+          REQUEST_TRACKING_ENABLED: 'true'
+          REQUEST_PORTAL_ENABLED: 'true'
+          COMMERCIAL_DOCUMENTS_ENABLED: 'true'
+          NEGOTIATION_ENABLED: 'true'
+          POST_AGREEMENT_ENABLED: 'true'
+          OMNI_PORTAL_MODE: 'internal'
+          INTERNAL_PORTAL_URL: 'https://127.0.0.1:3100'
+          TRACKING_SITE_URL: 'https://customer.example.com'
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         if: failure()
         with:

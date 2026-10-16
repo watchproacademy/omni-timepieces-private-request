@@ -150,3 +150,30 @@ body:has(.operator-shell) .movement{display:none}
 @media(max-width:700px){.negotiation-section{padding:14px}.negotiation-grid{grid-template-columns:1fr;gap:12px}.negotiation-meta>strong:last-child{margin-left:0;width:100%}.negotiation-actions{display:grid;grid-template-columns:1fr}.negotiation-actions button{width:100%}}
 .negotiation-decision-actions{position:sticky;top:8px;background:var(--surface-card);padding-block:8px;z-index:2;border-block:1px solid var(--border-control)}
 @media(max-width:700px){.negotiation-decision-actions{position:static}}
+.transaction-heading{display:flex;justify-content:space-between;align-items:start;gap:16px}.transaction-heading h2{margin:0}.transaction-track{display:flex;flex-wrap:wrap;gap:8px;list-style:none;padding:0;margin:16px 0}.transaction-track li{padding:6px 10px;border:1px solid var(--border-control);border-radius:var(--radius-control);font-size:var(--text-small)}.transaction-track [aria-current=step]{background:var(--selected-background);color:var(--selected-text);font-weight:600}.transaction-facts{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;padding:14px 0;border-block:1px solid var(--border-control);margin-bottom:16px}.transaction-facts span{display:block;font-size:var(--text-small);color:var(--text-secondary);margin-bottom:4px}.transaction-columns{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.2fr);gap:24px}.transaction-columns>div{min-width:0}.transaction-next h3{margin-top:0}.transaction-instructions{white-space:pre-wrap;overflow-wrap:anywhere}.transaction-workflow dd{margin:4px 0 12px}.transaction-action fieldset{border:0;padding:0;margin:0;min-width:0;display:grid;gap:12px}.transaction-workflow .portal-form{margin-block:12px}.transaction-evidence{margin-block:16px}.transaction-alert{font-weight:600;color:var(--accent)}.transaction-shipping{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.transaction-invoice-context{padding:12px;border:1px solid var(--border-control);border-radius:var(--radius-control)}.transaction-invoice-context label{display:grid;gap:6px;margin-block:12px}
+@media(max-width:700px){.transaction-columns,.transaction-facts,.transaction-shipping{grid-template-columns:1fr}.transaction-heading{display:block}.transaction-heading label{display:block;margin-top:12px}.transaction-workflow button{min-height:44px}.transaction-workflow input,.transaction-workflow textarea,.transaction-workflow select{font-size:16px}}
+
+@media(min-width:901px){
+ .operator-dashboard .request-panel-nav{flex-wrap:nowrap;overflow-x:auto;gap:6px;padding-block:8px}
+ .operator-dashboard .request-panel-nav button{flex-shrink:0;padding-inline:10px;white-space:nowrap}
+ .operator-dashboard .transaction-workflow{padding-block:12px;margin-top:0}
+ .operator-dashboard .transaction-heading .eyebrow{margin:0 0 4px}
+ .operator-dashboard .transaction-heading{gap:12px}
+ .operator-dashboard .transaction-track{margin:8px 0;gap:4px}
+ .operator-dashboard .transaction-track li{padding:4px 6px}
+ .operator-dashboard .transaction-facts{padding:8px 0;margin-bottom:10px}
+ .operator-dashboard .transaction-facts strong{font-size:14px;line-height:1.4}
+ .operator-dashboard .transaction-next h3{font-size:20px;margin:0 0 8px}
+ .operator-dashboard .transaction-next p{font-size:14px;line-height:1.5;margin:0 0 8px}
+ .operator-dashboard .transaction-action fieldset{gap:8px}
+ .operator-dashboard .transaction-action[data-action=funds_clear] fieldset{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .operator-dashboard .transaction-action[data-action=funds_clear] .portal-check,.operator-dashboard .transaction-action[data-action=funds_clear] .primary{grid-column:1/-1}
+ .operator-dashboard .transaction-columns{gap:16px}
+}
+
+.transaction-workflow .transaction-track li{margin:0}
+@media(max-width:700px){
+ .transaction-workflow .transaction-facts{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .transaction-workflow .transaction-facts>div:first-child{grid-column:1/-1}
+ .operator-dashboard .transaction-columns>.transaction-next{grid-row:1}
+}

@@ -1,4 +1,5 @@
 export function serverEnvironment() {
+    if(process.env.POST_AGREEMENT_ENABLED==='true'&&['REQUEST_TRACKING_ENABLED','REQUEST_PORTAL_ENABLED','COMMERCIAL_DOCUMENTS_ENABLED','NEGOTIATION_ENABLED'].some(key=>process.env[key]!=='true'))throw new Error('Post-agreement workflow requires tracking, portal, commercial review and negotiation.');
     const production = process.env.VERCEL_ENV === 'production';
     const preview = process.env.WATCH_REQUEST_PREVIEW_MODE === 'true';
     if (production && preview)

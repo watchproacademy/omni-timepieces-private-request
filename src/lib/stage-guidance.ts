@@ -9,6 +9,7 @@ const guidance = {
  ready_to_ship: ['Preparing your shipment', 'Your transaction review is complete. Your private desk is preparing the next shipping steps.', 'We’ll share tracking details once your watch has shipped.'],
  shipped: ['Your watch is on its way', 'Use the tracking details provided to follow your shipment. Message your private desk if you need help with delivery.', 'Follow any delivery instructions shared by your private desk or carrier.'],
  delivered: ['Your watch has arrived', 'Delivery has been recorded. Your private desk remains available if you have any questions about your watch.', 'Message us if you need assistance.'],
+ closed: ['Your concierge request is complete', 'Thank you for choosing Omni Timepieces. Your private desk remains available for follow-up.', 'Possession photos are welcome and entirely optional.'],
  waiting: ['Your request is on hold', 'Your private desk has paused this request. Check your messages for the reason and any information needed to continue.', 'You can message your private desk at any time.'],
  cancelled: ['Your request is closed', 'This watch request has been cancelled. Contact your private desk if you would like to discuss it or start a new request.', 'No further action is needed for this watch.'],
 } as const;

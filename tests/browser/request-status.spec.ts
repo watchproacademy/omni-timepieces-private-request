@@ -1,4 +1,7 @@
 import {test,expect} from '@playwright/test';
+// The legacy tracker is replaced by RequestDashboard when the portal is enabled.
+// portal.spec.ts covers that deployment; these fixtures target legacy /api/request-status.
+test.skip(process.env.REQUEST_PORTAL_ENABLED==='true','Legacy tracking requires REQUEST_PORTAL_ENABLED=false; portal coverage runs separately.');
 test('private tracking is either explicitly unavailable or requires email access',async({page})=>{
  await page.goto('/request-status');await expect(page.getByRole('heading',{name:'Your request, at a glance.'})).toBeVisible();
  if(await page.getByText('Request tracking is being prepared.',{exact:false}).isVisible())return;

@@ -12,7 +12,9 @@ export async function purgePortalFiles() {
  await sql.query("DELETE FROM admin_security_events WHERE created_at<now()-interval '90 days'");
  await sql.query("DELETE FROM admin_challenges WHERE expires_at<=now()");
  await sql.query("DELETE FROM admin_enrollment WHERE expires_at<=now()");
- await sql.query("UPDATE request_files SET state='deleting' WHERE expires_at<=now() OR (state='pending' AND created_at<now()-interval '1 hour')");
+ const coordination=await sql.query("SELECT to_regprocedure('public.transaction_claim_cleanup()') AS installed");
+ if(coordination[0]?.installed)await sql.query('SELECT transaction_claim_cleanup()');
+ else await sql.query("UPDATE request_files SET state='deleting' WHERE expires_at<=now() OR (state='pending' AND created_at<now()-interval '1 hour')");
  const files=await sql.query("SELECT id,pathname FROM request_files WHERE state='deleting' LIMIT 100");
  for(const file of files){await del(file.pathname);await sql.query("DELETE FROM request_files WHERE id=$1 AND state='deleting'",[file.id]);}
  // Stop parent cleanup until all expired objects were removed, preserving retry paths.

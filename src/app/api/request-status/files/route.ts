@@ -1,3 +1,5 @@
+import {postAgreementEnabled} from '@/lib/server/post-agreement';
+import {uploadTransactionFile} from '@/lib/server/transaction-files';
 import {commercialEnabled,visibleCommercialFileSql} from '@/lib/server/commercial-documents';
 import {scanDocument} from '@/lib/server/malware-scan';
 import {publishPending} from '@/lib/server/queue';
@@ -10,11 +12,13 @@ import {database} from '@/lib/server/db';
 import {documentType} from '@/lib/server/portal-files';
 import {portalEnabled,portalAccess,portalLimit,checkOrigin,limitedBody,portalReply,portalError} from '@/lib/server/portal';
 export const runtime='nodejs';
+export const maxDuration=120;
 export async function POST(request:Request){
  if(!portalEnabled())return portalReply({message:'Document uploads are being prepared.'},503);
  try{
  checkOrigin(request);const url=new URL(request.url),id=url.searchParams.get('id')||'',kind=url.searchParams.get('kind')||'';
  const access=await portalAccess(request,id);await portalLimit(request,120);
+ if(['payment_proof','shipment_proof','possession_photo'].includes(kind)){if(!postAgreementEnabled())throw new Error('ACCESS_DENIED');return portalReply({ok:true,id:await uploadTransactionFile(request,id,kind,access)});}
  if(!['identity','address','business','invoice'].includes(kind)||(kind==='invoice')!==(access.role==='owner'))throw new Error('ACCESS_DENIED');
  if(kind==='invoice'&&commercialEnabled())return portalReply({message:'Upload new invoices in commercial document review so they stay private until approval.'},400);
  const bytes=await limitedBody(request,3*1024*1024);if(!bytes.length)throw new Error('INVALID_INPUT');
