@@ -8,7 +8,7 @@ export const legacyPhoneSchema=z.string({error:'Enter your phone number.'}).trim
  if(!value)return true;
  const digits=value.replace(/\D/g,'');const number=digits.startsWith('00')?digits.slice(2):digits;
  return /^\+?[\d ()\u00a0.-]+$/.test(value)&&number.length>=7&&number.length<=15;
-},'Enter a valid phone number, for example +44 20 7946 0958.');
+},'Enter a valid phone number with country code.');
 const phone=legacyPhoneSchema.refine(value=>!!value,'A phone number is required, including for email follow-up.');
 
 export function watchSchemaForTimeline<T extends z.ZodType<string>>(timeline:T){return z.object({
